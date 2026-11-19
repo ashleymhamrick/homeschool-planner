@@ -625,6 +625,7 @@ function renderWizard(){
     <div class="wiznav"><span></span><button class="btn primary" data-wiz="next">Next</button></div>`;
   if(WIZ.step===2)h=`<div class="stepcount">Step 2 of 3</div><h2>What do you teach each day?</h2><p>Each item is a section of your day. Remove the check from items you do not teach. You can change the names later in Setup.</p>
     <div class="chips">${S.sections.map(x=>`<label class="chip"><input type="checkbox" data-wsec="${esc(x.id)}" ${WIZ.secs.includes(x.id)?"checked":""}><span>${esc(x.title)}<small>${esc(WIZ_DESC[x.id]||x.hint||"")}</small></span></label>`).join("")}</div>
+    <div class="row"><input type="text" id="wzNew" placeholder="Add your own, for example Latin or Nature study" aria-label="Add your own subject"><button class="btn fit" data-wiz="add">Add</button></div>
     <div class="wiznav"><button class="btn" data-wiz="back">Back</button><button class="btn primary" data-wiz="next">Next</button></div>`;
   if(WIZ.step===3)h=`<div class="stepcount">Step 3 of 3</div><h2>How do you want to start?</h2><p>It does not have to be perfect. You can change everything later.</p>
     <div class="choices">
@@ -635,6 +636,7 @@ function renderWizard(){
     <div class="wiznav"><button class="btn" data-wiz="back">Back</button><span></span></div>`;
   w.innerHTML=`<div class="wiz">${h}</div>`;
 }
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="wzNew"){e.preventDefault();const b=document.querySelector('[data-wiz="add"]');if(b)b.click()}});
 function wizRead(){const st=$("wzStart");if(st)WIZ.start=st.value;
   const d=[...document.querySelectorAll("[data-wday]")];if(d.length)WIZ.days=d.filter(x=>x.checked).map(x=>x.dataset.wday);
   const c=[...document.querySelectorAll("[data-wsec]")];if(c.length)WIZ.secs=c.filter(x=>x.checked).map(x=>x.dataset.wsec)}
@@ -642,6 +644,9 @@ $("wizard").addEventListener("click",e=>{const b=e.target.closest("button");if(!
   if(b.dataset.wiz==="next"){if(WIZ.step===1&&(!parseISO(WIZ.start)||!WIZ.days.length)){toast(!WIZ.days.length?"Pick at least one school day":"Pick your first day of school");return}
     if(WIZ.step===2&&!WIZ.secs.length){toast("Keep at least one section");return}WIZ.step++;renderWizard();window.scrollTo(0,0);return}
   if(b.dataset.wiz==="back"){WIZ.step--;renderWizard();return}
+  if(b.dataset.wiz==="add"){const t=($("wzNew").value||"").trim().slice(0,60);if(!t){$("wzNew").focus();return}
+    const id="s"+uid(),before=S.sections.findIndex(x=>x.id==="extra"),sec={id,title:t,tag:"",color:"core",optional:false,hint:"",mine:""};
+    if(before>=0)S.sections.splice(before,0,sec);else S.sections.push(sec);WIZ.secs.push(id);renderWizard();const n=$("wzNew");if(n)n.focus();toast("Added "+t);return}
   if(b.dataset.wizgo){S.setup={...S.setup,start:WIZ.start,days:WIZ.days,done:true,since:iso(new Date())};S.sections=S.sections.filter(x=>WIZ.secs.includes(x.id));save("meta");
     const p=todayPos();curW=p.w;cur=p.d;startWith(b.dataset.wizgo)}});
 function startWith(kind){

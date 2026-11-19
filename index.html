@@ -331,6 +331,14 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .acc>summary::after{content:" +";color:var(--muted);font:400 1.2rem var(--sans)}.acc[open]>summary::after{content:" –"}
 .acc>summary{display:flex;justify-content:space-between;align-items:baseline}
 .nudge{border-radius:6px}
+.phpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.phpick .btn{text-align:center;padding:12px;cursor:pointer}
+.phthumbs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.phthumbs li{position:relative;aspect-ratio:3/4;border-radius:4px;overflow:hidden;background:var(--line)}
+.phthumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.phthumbs .n{position:absolute;left:4px;bottom:4px;background:rgba(15,20,32,.75);color:#fff;font:600 .7rem var(--sans);border-radius:3px;padding:1px 5px}
+.phthumbs button{all:unset;position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;background:rgba(15,20,32,.75);color:#fff;display:grid;place-items:center;font:600 .9rem/1 var(--sans);cursor:pointer}
+.phthumbs button:focus-visible{outline:2px solid var(--focus)}
 .brklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
 .brklist button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:4px;padding:7px 6px;font:600 .85rem var(--sans);text-align:left;display:grid;gap:1px}
 .brklist button small{font-weight:400;color:var(--muted);font-size:.72rem}
@@ -435,9 +443,12 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
       </ol>
       <div id="photoUnavailable" class="hint" hidden></div>
       <div id="photoForm" style="display:grid;gap:10px">
-        <label class="btn primary" style="text-align:center;padding:12px;cursor:pointer">Take or choose photos
-          <input type="file" id="phFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-        </label>
+        <div class="phpick">
+          <label class="btn primary">Take a photo<input type="file" id="phCam" accept="image/*" capture="environment" hidden></label>
+          <label class="btn">Choose photos<input type="file" id="phFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden></label>
+        </div>
+        <p class="note" style="margin:0">Take one page at a time, or choose several from your photos. Each new photo is added to the list.</p>
+        <ul class="phthumbs" id="phThumbs" hidden></ul>
         <span class="note" id="phCount"></span>
         <details class="more"><summary>More options</summary><div style="display:grid;gap:10px;margin-top:10px">
         <div class="row">
@@ -999,7 +1010,16 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-phkind]");
 function scheduleLessons(titles,secId,pace,startW){const days=DAYS.map(d=>d[0]).filter(d=>S.setup.days.includes(d)),D=days.length||1,n=weekMondays().length;
   const items=[];titles.forEach((t,i)=>{const wkOff=Math.floor(i/pace),slot=i%pace,day=days[Math.min(D-1,Math.floor((slot+.5)*D/pace))];
     items.push({week:wkOff+1,day,section:secId,title:t,notes:"",on:startW+wkOff<=n})});return items}
-$("phFiles").addEventListener("change",()=>{const n=$("phFiles").files.length;$("phCount").textContent=n?n+" photo"+(n===1?"":"s")+" ready.":"";$("phGo").hidden=!n;$("phGo").classList.toggle("primary",!!n)});
+/* Photos add up across picks, so a parent can take one page at a time. */
+let phPicked=[];
+function renderPicked(){const n=phPicked.length;phPicked.forEach(x=>{if(!x.url)x.url=URL.createObjectURL(x.f)});
+  $("phThumbs").hidden=!n;$("phThumbs").innerHTML=phPicked.map((x,i)=>`<li><img src="${x.url}" alt="Photo ${i+1}"><span class="n">${i+1}</span><button type="button" data-phrm="${i}" aria-label="Remove photo ${i+1}">×</button></li>`).join("");
+  $("phCount").textContent=n?plural(n,"photo")+" ready. Add more, or read them now.":"";$("phGo").hidden=!n;$("phGo").classList.toggle("primary",!!n)}
+function addPicked(input){[...input.files].forEach(f=>phPicked.push({f}));input.value="";renderPicked()}
+function clearPicked(){phPicked.forEach(x=>x.url&&URL.revokeObjectURL(x.url));phPicked=[];renderPicked()}
+$("phFiles").addEventListener("change",()=>addPicked($("phFiles")));
+$("phCam").addEventListener("change",()=>addPicked($("phCam")));
+$("phThumbs").addEventListener("click",e=>{const b=e.target.closest("[data-phrm]");if(!b)return;const x=phPicked.splice(+b.dataset.phrm,1)[0];if(x&&x.url)URL.revokeObjectURL(x.url);renderPicked()});
 let phKid="all";
 function renderPhFor(){$("phForBox").innerHTML=multi()?`<div style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">Who is this book for?</b><div class="kids" style="margin:0">${[...S.kids.map(k=>[k.id,k.name,k.color]),["all","Everyone",""]].map(([v,l,c])=>`<button type="button" data-phfor="${esc(v)}" aria-pressed="${v===phKid}">${c?`<span class="kdot" style="background:${esc(c)}"></span>`:""}${esc(l)}</button>`).join("")}</div><p class="note" style="margin:0">Pick Everyone for books you teach together, like Morning Time or read aloud.</p></div>`:""}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-phfor]");if(b){phKid=b.dataset.phfor;renderPhFor()}});
@@ -1031,7 +1051,7 @@ async function readPhotos(files,mode,note,carry,signal,last){
   if(out.pageLimit){$("phLimit").textContent=out.pageLimit}
   return out}
 $("phGo").addEventListener("click",async()=>{
-  const files=[...$("phFiles").files];if(!files.length){toast("Choose at least one photo");return}
+  const files=phPicked.map(x=>x.f);if(!files.length){toast("Take or choose at least one photo");return}
   if(!limits||!limits.images)return;
   const max=Math.max(1,limits.images.maxCount),tooBig=files.filter(f=>f.size>limits.images.maxInputBytes),ok=files.filter(f=>f.size<=limits.images.maxInputBytes);
   const toc=phKind==="toc",mode=toc?"toc":$("phMode").value,note=$("phNote").value.trim(),startW=toc?(+$("phTocWeek").value||curW):(+$("phWeek").value||curW);
@@ -1080,7 +1100,7 @@ $("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new S
   proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000)};if(multi()&&phKid!=="all"&&kidById(phKid))it.kid=phKid;
     if(x.day==="every")(W.every[x.section]=W.every[x.section]||[]).push(it);else{W.days[x.day]=W.days[x.day]||{};(W.days[x.day][x.section]=W.days[x.day][x.section]||[]).push(it)}touched.add(x.realWeek);ni++});
   proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300),...(multi()&&phKid!=="all"&&kidById(phKid)?{kid:phKid}:{})});touched.add(g.realWeek);ng++});
-  touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;$("phFiles").value="";$("phMsg").textContent="";$("phCount").textContent="";$("phGo").hidden=true;
+  touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;clearPicked();$("phMsg").textContent="";
   if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}Sheet.close();toast(ng?`Added ${plural(ni,"item")} and ${plural(ng,"goal")}`:`Added ${plural(ni,"item")}`)});
 $("phDiscard").addEventListener("click",()=>{proposal=null;$("phResults").hidden=true;$("phMsg").textContent=""});
 

@@ -1,4 +1,4 @@
-# Daybook: website
+# Lucerna: website
 
 ## Already done
 - **Database (Supabase project "ashleymhamrick's Project", US West):** the `planners` and `photo_usage` tables, privacy rules so each family sees only their own planner, account deletion, and a monthly photo page count.

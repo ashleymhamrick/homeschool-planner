@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Daybook</title>
-<meta name="description" content="Daybook is a homeschool planner that walks you through the day. Take photos of your teacher's book and it plans your week.">
+<title>Lucerna: a homeschool day planner</title>
+<meta name="description" content="Lucerna is a homeschool planner that walks you through the day. Take photos of your teacher's book and it plans your week.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -227,7 +227,9 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
 body{font:16px/1.55 var(--sans)}
 .hero h1,.wiz h2,.sheet-head h2,#passGate h1{font-family:var(--display);font-weight:600;letter-spacing:-.005em}
 .hero{background:var(--band);color:var(--bandink);box-shadow:0 0 0 100vmax var(--band);clip-path:inset(-100px -100vmax 0 -100vmax);margin-top:-40px;padding:44px 0 30px}
-.hero::before{content:"Daybook";display:block;font:italic 600 1.1rem var(--display);color:var(--gold);margin-bottom:22px}
+.brandmark{display:grid;gap:2px;margin-bottom:26px}
+.brandmark b{font:italic 600 2rem/1 var(--display);color:var(--gold)}
+.brandmark small{font:italic 500 1.05rem var(--display);color:var(--bandmuted)}
 .hero h1{font-size:2.5rem;line-height:1.05}
 .hero p{color:var(--bandmuted)}
 .feat li::before{color:var(--gold)}
@@ -340,6 +342,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 <body>
 <div class="authwrap" id="authView" hidden>
   <div class="hero">
+    <div class="brandmark"><b>Lucerna</b><small>A lamp for your school day</small></div>
     <h1>A homeschool planner that walks you through the day</h1>
     <p>Take photos of your teacher's book. The planner puts each lesson in your day and writes the steps. You check it and add it.</p>
   </div>
@@ -363,7 +366,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
   <p class="foot"><a href="privacy.html">Privacy</a></p>
 </div>
 <div class="authwrap" id="passGate" hidden>
-  <div class="hero"><h1>Welcome! Make your password</h1>
+  <div class="hero"><div class="brandmark"><b>Lucerna</b><small>A lamp for your school day</small></div><h1>Welcome! Make your password</h1>
     <p>You sign in with your email and this password. You only do this one time.</p></div>
   <section class="panel">
     <form id="gateForm" class="authform">
@@ -381,7 +384,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 <div class="wrap" id="appView" hidden>
   <header class="dayhead" id="topbar">
     <div>
-      <div class="eyebrow" id="title">Daybook</div>
+      <div class="eyebrow" id="title">Lucerna</div>
       <h1 id="dayTitle"></h1>
       <div class="sub" id="subtitle"></div>
     </div>
@@ -543,7 +546,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-/* ===== Daybook =====
+/* ===== Lucerna =====
    Saves privately per person in this page's database (data/users/<id>/...), one document for setup and one per week,
    or in this browser when the database can't take writes. "Fill from photos" asks Claude to read curriculum pages. */
 const $=id=>document.getElementById(id);
@@ -585,10 +588,10 @@ const DEFAULT_SECTIONS=[
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function parseISO(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());return m?new Date(+m[1],+m[2]-1,+m[3]):null}
 function blank(){const d=new Date();const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));
-  return {setup:{name:"Daybook",child:"",start:iso(mon),weeks:36,breaks:[],days:["mon","tue","wed","thu","fri"]},
+  return {setup:{name:"Lucerna",child:"",start:iso(mon),weeks:36,breaks:[],days:["mon","tue","wed","thu","fri"]},
     sections:JSON.parse(JSON.stringify(DEFAULT_SECTIONS)).map(x=>({...x,shared:!!SHARED_DEFAULT[x.id]})),kids:[],weeks:{},checks:{},notes:{},short:{},goals:{}}}
 /* ----- children ----- */
-function normalize(){if(!S.setup.name||S.setup.name==="Homeschool Day Planner")S.setup.name="Daybook";S.off=S.off||{};S.skip=S.skip||{};S.extraDays=S.extraDays||{};if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
+function normalize(){if(!S.setup.name||S.setup.name==="Homeschool Day Planner"||S.setup.name==="Daybook")S.setup.name="Lucerna";S.off=S.off||{};S.skip=S.skip||{};S.extraDays=S.extraDays||{};if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
   S.sections.forEach(x=>{if(x.shared===undefined)x.shared=!!SHARED_DEFAULT[x.id]})}
 const multi=()=>S.kids.length>1;
 const kidById=id=>S.kids.find(k=>k.id===id);
@@ -668,7 +671,7 @@ function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))cu
   const ds=daysOf(curW);if(!ds.find(d=>d[0]===cur))cur=ds[0]?ds[0][0]:"mon";
   try{localStorage.setItem(LKEY+"-pos",JSON.stringify({w:curW,d:cur,k:curKid}))}catch(e){}
   const ck1=S.kids.length===1?S.kids[0].name:"";const kv=multi()&&curKid!=="all"?kidById(curKid):null;
-  $("title").textContent=kv?kv.name+"'s day":(ck1?ck1+"'s ":"")+(S.setup.name||"Daybook");
+  $("title").textContent=kv?kv.name+"'s day":ck1?ck1+"'s day":(S.setup.name||"Lucerna");
   const dt=dateOf(curW,cur),onToday=sameDay(dt,new Date());
   $("dayTitle").innerHTML=dt?`<span class="dn">${dt.getDate()}</span><span class="dw">${esc(dt.toLocaleDateString(undefined,{weekday:"long"}))}<small>${onToday?"Today, ":""}${esc(dt.toLocaleDateString(undefined,{month:"long"}))}</small></span>`:"";
   $("subtitle").innerHTML=`Week ${curW} of ${n} <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
@@ -944,7 +947,7 @@ $("saveSetup").addEventListener("click",()=>{readSections();
   const weeks=Math.max(1,Math.min(60,parseInt($("sWeeks").value,10)||36));const bad=[];
   const breaks=$("sBreaks").value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean).filter(x=>{if(parseISO(x))return true;bad.push(x);return false});
   const days=[...$("sDays").querySelectorAll("input:checked")].map(x=>x.value);if(!days.length){toast("Choose at least one school day");return}
-  S.setup={...S.setup,name:$("sName").value.trim()||"Daybook",start:iso(st),weeks,breaks,days};
+  S.setup={...S.setup,name:$("sName").value.trim()||"Lucerna",start:iso(st),weeks,breaks,days};
   save("meta");render();toast(bad.length?"Saved. Skipped dates that weren't YYYY-MM-DD: "+bad.join(", "):"Setup saved")});
 let kidDraft=null;
 function renderKidList(){if(!kidDraft)kidDraft=S.kids.map(k=>({...k}));if(!kidDraft.length)kidDraft.push({id:"k"+uid(),name:"",color:KID_COLORS[0]});

@@ -331,6 +331,12 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .acc>summary::after{content:" +";color:var(--muted);font:400 1.2rem var(--sans)}.acc[open]>summary::after{content:" –"}
 .acc>summary{display:flex;justify-content:space-between;align-items:baseline}
 .nudge{border-radius:6px}
+.toast.act{pointer-events:auto}
+.toastbtn{all:unset;cursor:pointer;margin-left:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px;color:inherit}
+.prev li.phgroup{background:none;border:0;padding:12px 0 2px;display:block}
+.prev li.phgroup label{display:flex;align-items:center;gap:10px;font:600 .95rem var(--sans);cursor:pointer}
+.prev li.phgroup img{width:38px;height:50px;object-fit:cover;border-radius:3px;border:1px solid var(--line)}
+.prev li.phgroup small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
 .phpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .phpick .btn{text-align:center;padding:12px;cursor:pointer}
 .phthumbs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
@@ -610,7 +616,7 @@ function blank(){const d=new Date();const mon=new Date(d);mon.setDate(d.getDate(
   return {setup:{name:"Lucerna",child:"",start:iso(mon),weeks:36,breaks:[],days:["mon","tue","wed","thu","fri"]},
     sections:JSON.parse(JSON.stringify(DEFAULT_SECTIONS)).map(x=>({...x,shared:!!SHARED_DEFAULT[x.id]})),kids:[],weeks:{},checks:{},notes:{},short:{},goals:{}}}
 /* ----- children ----- */
-function normalize(){if(!S.setup.name||S.setup.name==="Homeschool Day Planner"||S.setup.name==="Daybook")S.setup.name="Lucerna";S.off=S.off||{};S.skip=S.skip||{};S.extraDays=S.extraDays||{};if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
+function normalize(){if(!Array.isArray(S.imports))S.imports=[];if(!S.setup.name||S.setup.name==="Homeschool Day Planner"||S.setup.name==="Daybook")S.setup.name="Lucerna";S.off=S.off||{};S.skip=S.skip||{};S.extraDays=S.extraDays||{};if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
   S.sections.forEach(x=>{if(x.shared===undefined)x.shared=!!SHARED_DEFAULT[x.id]})}
 const multi=()=>S.kids.length>1;
 const kidById=id=>S.kids.find(k=>k.id===id);
@@ -658,7 +664,11 @@ const Store={mode:null,sb:null,user:null,version:0,timer:null,inflight:false,dir
   }
 };
 function save(){Store.mark()}
-function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2800)}
+function toast(t){const el=$("toast");el.classList.remove("act");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2800)}
+function toastAction(t,label,fn,ms){const el=$("toast");el.innerHTML=`${esc(t)}<button class="toastbtn" type="button">${esc(label)}</button>`;el.classList.add("show","act");
+  el.querySelector("button").onclick=()=>{el.classList.remove("show","act");clearTimeout(toast.t);fn()};clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show","act"),ms||10000)}
+function snapshotPlan(){return {weeks:JSON.stringify(S.weeks),goals:JSON.stringify(S.goals),imports:JSON.stringify(S.imports||[]),checks:JSON.stringify(S.checks)}}
+function restorePlan(sn){S.weeks=JSON.parse(sn.weeks);S.goals=JSON.parse(sn.goals);S.imports=JSON.parse(sn.imports);S.checks=JSON.parse(sn.checks);Object.keys(S.weeks).forEach(w=>save(+w));save("meta");render()}
 
 /* ----- calendar ----- */
 function weekMondays(){
@@ -785,6 +795,7 @@ function openPanel(id){
   if(id==="setup"){kidDraft=null;fillSetup();fillPassUI();Sheet.open("Settings",$("setupPanel"));return}
   if(id==="password"){openPassword();return}
   if(id==="dayoff"){openDayOff();return}
+  if(id==="imports"){openImports();return}
   if(id==="weekoff"){openWeekOff();return}
   if(id==="invite"){loadInvites();Sheet.open("Invite families",$("invitePanel"));return}
   if(id==="note"){Sheet.open("Note for "+dayName(cur)+" "+(dateOf(curW,cur)?dateOf(curW,cur).getDate():""),`<textarea id="noteText" style="min-height:160px" placeholder="What went well? What should you do again?" aria-label="Note for today" autofocus>${esc(S.notes[curW+"-"+cur]||"")}</textarea><p class="note" style="margin:0">Saves as you type.</p>`);
@@ -794,6 +805,7 @@ function openPanel(id){
       <li><button data-open="photos">Fill from photos<small>Claude reads your teacher's book and plans the week</small></button></li>
       <li><button data-open="goals">Week goals<small>What your child should be able to do by the end of the week</small></button></li>
       ${missedN?`<li><button data-open="missed">Catch up<small>${missedN} unchecked from past days</small></button></li>`:""}
+      ${S.imports&&S.imports.length?`<li><button data-open="imports">Photo history<small>Remove lessons you added from photos</small></button></li>`:""}
       <li><button data-open="dayoff">Day off<small>Take ${esc(dateOf(curW,cur)?dateOf(curW,cur).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"}):dayName(cur))} off and choose when to make up its lessons</small></button></li>
       <li><button data-open="weekoff">Take this week off<small>This week and everything after move one week later</small></button></li>
       <li><button id="copyNext">Copy this week to next week<small>Copies every item, not the checkmarks</small></button></li>
@@ -825,7 +837,7 @@ $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("button");i
     const forK=$("addFor").value||segVal();if(multi()&&forK!=="all")it.kid=forK;
     if(every)(W.every[sec]=W.every[sec]||[]).push(it);else{W.days[cur]=W.days[cur]||{};(W.days[cur][sec]=W.days[cur][sec]||[]).push(it)}
     save(curW);Sheet.close();toast("Added");return}
-  if(b.id==="itSave"){const f=findItem(b.dataset.id);if(f){const t=$("itT").value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=$("itN").value.trim();if(multi()){const v=segVal();if(v==="all")delete f.L[f.i].kid;else f.L[f.i].kid=v}save(curW)}Sheet.close();toast("Saved");return}
+  if(b.id==="itSave"){const f=findItem(b.dataset.id);if(f){const t=$("itT").value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=$("itN").value.trim();if(f.L[f.i].src)f.L[f.i].ed=1;if(multi()){const v=segVal();if(v==="all")delete f.L[f.i].kid;else f.L[f.i].kid=v}save(curW)}Sheet.close();toast("Saved");return}
   if(b.id==="itDel"){const f=findItem(b.dataset.id);if(!f)return;if(!confirmInline(b,f.every?"This removes it from every day this week.":"This removes the item.","Tap to remove"))return;f.L.splice(f.i,1);save(curW);Sheet.close();toast("Removed");return}
   if(b.id==="copyNext"){if(curW>=weekMondays().length){toast("This is the last week");return}
     const src=wk(curW),dst=wk(curW+1);const cp=L=>L.filter(x=>!x.ex).map(x=>({id:uid(),t:x.t,n:x.n,...(x.kid?{kid:x.kid}:{})}));
@@ -1007,9 +1019,9 @@ function setPhKind(k){phKind=k;document.querySelectorAll("[data-phkind]").forEac
   document.querySelectorAll("#photoPanel .steps3, #photoPanel .more").forEach(el=>el.hidden=k==="toc")}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-phkind]");if(b)setPhKind(b.dataset.phkind)});
 /* Spread lessons from a table of contents across school weeks: N a week, evenly over the school days, in book order. */
-function scheduleLessons(titles,secId,pace,startW){const days=DAYS.map(d=>d[0]).filter(d=>S.setup.days.includes(d)),D=days.length||1,n=weekMondays().length;
+function scheduleLessons(titles,secId,pace,startW,photos){const days=DAYS.map(d=>d[0]).filter(d=>S.setup.days.includes(d)),D=days.length||1,n=weekMondays().length;
   const items=[];titles.forEach((t,i)=>{const wkOff=Math.floor(i/pace),slot=i%pace,day=days[Math.min(D-1,Math.floor((slot+.5)*D/pace))];
-    items.push({week:wkOff+1,day,section:secId,title:t,notes:"",on:startW+wkOff<=n})});return items}
+    items.push({week:wkOff+1,day,section:secId,title:t,notes:"",photo:(photos&&photos[i])||0,on:startW+wkOff<=n})});return items}
 /* Photos add up across picks, so a parent can take one page at a time. */
 let phPicked=[];
 function renderPicked(){const n=phPicked.length;phPicked.forEach(x=>{if(!x.url)x.url=URL.createObjectURL(x.f)});
@@ -1055,7 +1067,7 @@ $("phGo").addEventListener("click",async()=>{
   if(!limits||!limits.images)return;
   const max=Math.max(1,limits.images.maxCount),tooBig=files.filter(f=>f.size>limits.images.maxInputBytes),ok=files.filter(f=>f.size<=limits.images.maxInputBytes);
   const toc=phKind==="toc",mode=toc?"toc":$("phMode").value,note=$("phNote").value.trim(),startW=toc?(+$("phTocWeek").value||curW):(+$("phWeek").value||curW);
-  const pace=Math.max(1,Math.min(20,parseInt($("phPace").value,10)||5)),tocSec=$("phTocSec").value;let lessons=[],book="";
+  const pace=Math.max(1,Math.min(20,parseInt($("phPace").value,10)||5)),tocSec=$("phTocSec").value;let lessons=[],lessonPhotos=[],book="";
   const batches=[];for(let i=0;i<ok.length;i+=max)batches.push(ok.slice(i,i+max));
   phAbort=new AbortController();$("phGo").disabled=true;$("phStop").hidden=false;
   const all={items:[],goals:[],warnings:tooBig.map(f=>`${f.name} is too large to send. Try a smaller photo.`)};let lastWeek=0;
@@ -1063,14 +1075,15 @@ $("phGo").addEventListener("click",async()=>{
     for(let b=0;b<batches.length;b++){
       $("phMsg").textContent=`Reading photos ${b*max+1}–${b*max+batches[b].length} of ${ok.length}…`;
       const res=await readPhotos(batches[b],mode,note,toc?lessons.length:lastWeek,phAbort.signal,toc?(lessons[lessons.length-1]||""):"");
-      if(toc){(Array.isArray(res&&res.lessons)?res.lessons:[]).forEach(x=>{const t=String(x&&x.title||"").trim();if(t&&(!lessons.length||lessons[lessons.length-1].toLowerCase()!==t.toLowerCase()))lessons.push(t)});
+      const base=b*max,pn=x=>{const k=parseInt(x&&x.photo,10);return k>0&&k<=batches[b].length?base+k:0};
+      if(toc){(Array.isArray(res&&res.lessons)?res.lessons:[]).forEach(x=>{const t=String(x&&x.title||"").trim();if(t&&(!lessons.length||lessons[lessons.length-1].toLowerCase()!==t.toLowerCase())){lessons.push(t);lessonPhotos.push(pn(x))}});
         if(res&&res.book&&!book)book=res.book;(Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));continue}
       const items=Array.isArray(res&&res.items)?res.items:[];
-      items.forEach(x=>{const w=mode==="one"?1:Math.max(1,parseInt(x.week,10)||1);lastWeek=Math.max(lastWeek,w);all.items.push({...x,week:w})});
+      items.forEach(x=>{const w=mode==="one"?1:Math.max(1,parseInt(x.week,10)||1);lastWeek=Math.max(lastWeek,w);all.items.push({...x,week:w,photo:pn(x)})});
       (Array.isArray(res&&res.goals)?res.goals:[]).forEach(g=>all.goals.push({week:mode==="one"?1:Math.max(1,parseInt(g.week,10)||1),text:String(g.text||g||"")}));
       (Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));
     }
-    if(toc){all.items=scheduleLessons(lessons,tocSec,pace,startW);const weeks=Math.ceil(lessons.length/pace),n=weekMondays().length,endW=startW+weeks-1,over=all.items.filter(x=>!x.on).length;
+    if(toc){all.items=scheduleLessons(lessons,tocSec,pace,startW,lessonPhotos);const weeks=Math.ceil(lessons.length/pace),n=weekMondays().length,endW=startW+weeks-1,over=all.items.filter(x=>!x.on).length;
       if(over)all.warnings.push(`${plural(over,"lesson")} do not fit before your last school week (Week ${n}). They are not checked. Add more school weeks in Settings, or choose more lessons each week.`);
       $("phMsg").textContent=lessons.length?`Claude found ${plural(lessons.length,"lesson")}${book?" in "+book:""}. At ${pace} a week, they fill ${plural(weeks,"week")} (Week ${startW} to Week ${Math.min(endW,n)}).`:"Claude did not find lessons in these photos.";}
     else $("phMsg").textContent=all.items.length?`Claude found ${plural(all.items.length,"item")}. Check ${all.items.length===1?"it":"them"} below.`:"Claude did not find lessons in these photos.";
@@ -1079,7 +1092,7 @@ $("phGo").addEventListener("click",async()=>{
     const msg={limit:e&&e.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can still add lessons by hand with the + Add links.",upstream:e&&e.message,cancelled:"Stopped.",not_granted:"This page isn't allowed to use Claude. Allow it when asked, then try again.",sampling_disabled:"Claude isn't available for this account.",images_unavailable:"This view can't send photos to Claude.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",rate_limited:"You've reached a usage limit for now. Try again later.",session_expired:"Please sign in to Claude again, then retry.",refused:"Claude couldn't help with those pages. Try different photos.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once.",empty_completion:"Claude didn't return anything. Try fewer or clearer photos.",prompt_too_large:"That's too much at once. Try fewer photos or a shorter note."}[code]||"Something went wrong reading the photos. Try again.";
     $("phMsg").textContent=(all.items.length?"Claude stopped before the end. ":"")+msg;
   }finally{$("phGo").disabled=false;$("phStop").hidden=true;phAbort=null}
-  if(all.items.length||all.goals.length){proposal={start:startW,...all};showProposal()}
+  if(all.items.length||all.goals.length){proposal={start:startW,...all,kind:toc?"toc":"lessons",book,tocSec};showProposal()}
 });
 $("phStop").addEventListener("click",()=>{if(phAbort)phAbort.abort()});
 function showProposal(){
@@ -1089,19 +1102,54 @@ function showProposal(){
   P.items.forEach(x=>{x.realWeek=Math.min(n,P.start+(x.week-1));if(!S.sections.find(s=>s.id===x.section))x.section=(S.sections.find(s=>s.id==="extra")||S.sections[0]).id;if(x.day!=="every"&&!S.setup.days.includes(x.day))x.day=S.setup.days[0];if(x.on===undefined)x.on=true});
   P.goals.forEach(g=>{g.realWeek=Math.min(n,P.start+(g.week-1));if(g.on===undefined)g.on=true});
   $("phWarn").hidden=!P.warnings.length;$("phWarn").innerHTML=P.warnings.map(esc).join("<br>");
-  $("phList").innerHTML=P.items.map((x,i)=>`<li data-i="${i}" class="${x.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${x.on?"checked":""}> Add</label><select data-p="realWeek" aria-label="Week">${wkOpts(x.realWeek)}</select><select data-p="day" aria-label="Day">${dayOpts(x.day)}</select><select data-p="section" aria-label="Section">${secOpts(x.section)}</select></div><input type="text" data-p="title" value="${esc(x.title)}" aria-label="Item"><textarea data-p="notes" aria-label="How-to steps">${esc(x.notes||"")}</textarea></li>`).join("")
+  const itemLi=(x,i)=>`<li data-i="${i}" class="${x.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${x.on?"checked":""}> Add</label><select data-p="realWeek" aria-label="Week">${wkOpts(x.realWeek)}</select><select data-p="day" aria-label="Day">${dayOpts(x.day)}</select><select data-p="section" aria-label="Section">${secOpts(x.section)}</select></div><input type="text" data-p="title" value="${esc(x.title)}" aria-label="Item"><textarea data-p="notes" aria-label="How-to steps">${esc(x.notes||"")}</textarea></li>`;
+  const groups=new Map();P.items.forEach((x,i)=>{const g=x.photo||0;if(!groups.has(g))groups.set(g,[]);groups.get(g).push(i)});
+  const byPhoto=[...groups.keys()].filter(g=>g>0).length>1;
+  const head=g=>{const ids=groups.get(g),on=ids.filter(i=>P.items[i].on).length,pic=g&&phPicked[g-1]&&phPicked[g-1].url;
+    return `<li class="phgroup"><label><input type="checkbox" data-grp="${g}" ${on?"checked":""}>${pic?`<img src="${pic}" alt="">`:""}<span>${g?`Photo ${g}`:"Other lessons"}<small>${plural(ids.length,"item")}${on<ids.length?`, ${on} checked`:""}</small></span></label></li>`};
+  $("phList").innerHTML=(byPhoto?[...groups.keys()].sort((a,b)=>(a||1e9)-(b||1e9)).map(g=>head(g)+groups.get(g).map(i=>itemLi(P.items[i],i)).join("")).join(""):P.items.map(itemLi).join(""))
     +P.goals.map((g,i)=>`<li data-g="${i}" class="${g.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${g.on?"checked":""}> Add goal</label><select data-p="realWeek" aria-label="Week">${wkOpts(g.realWeek)}</select></div><input type="text" data-p="text" value="${esc(g.text)}" aria-label="Goal"></li>`).join("");
   $("phResults").hidden=false;$("phAdd").textContent=`Add ${plural(P.items.filter(x=>x.on).length,"item")}`+(P.goals.length?` and ${plural(P.goals.filter(g=>g.on).length,"goal")}`:"");
 }
-$("phList").addEventListener("input",e=>{const f=e.target.closest("[data-p]");if(!f||!proposal)return;const li=f.closest("li");
+$("phList").addEventListener("input",e=>{if(e.target.dataset.grp!=null&&proposal){const g=+e.target.dataset.grp;proposal.items.forEach(x=>{if((x.photo||0)===g)x.on=e.target.checked});showProposal();return}
+  const f=e.target.closest("[data-p]");if(!f||!proposal)return;const li=f.closest("li");
   const obj=li.dataset.g!=null?proposal.goals[+li.dataset.g]:proposal.items[+li.dataset.i];const k=f.dataset.p;
   obj[k]=f.type==="checkbox"?f.checked:(k==="realWeek"?+f.value:f.value);if(k==="on"){li.classList.toggle("off",!f.checked);$("phAdd").textContent=`Add ${plural(proposal.items.filter(x=>x.on).length,"item")}`+(proposal.goals.length?` and ${plural(proposal.goals.filter(g=>g.on).length,"goal")}`:"")}});
-$("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new Set();let ni=0,ng=0;
-  proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000)};if(multi()&&phKid!=="all"&&kidById(phKid))it.kid=phKid;
+$("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new Set();let ni=0,ng=0;const snap=snapshotPlan(),src="i"+uid(),secsUsed=new Set();
+  proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000),src};secsUsed.add(x.section);if(multi()&&phKid!=="all"&&kidById(phKid))it.kid=phKid;
     if(x.day==="every")(W.every[x.section]=W.every[x.section]||[]).push(it);else{W.days[x.day]=W.days[x.day]||{};(W.days[x.day][x.section]=W.days[x.day][x.section]||[]).push(it)}touched.add(x.realWeek);ni++});
-  proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300),...(multi()&&phKid!=="all"&&kidById(phKid)?{kid:phKid}:{})});touched.add(g.realWeek);ng++});
-  touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;clearPicked();$("phMsg").textContent="";
-  if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}Sheet.close();toast(ng?`Added ${plural(ni,"item")} and ${plural(ng,"goal")}`:`Added ${plural(ni,"item")}`)});
+  proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300),src,...(multi()&&phKid!=="all"&&kidById(phKid)?{kid:phKid}:{})});touched.add(g.realWeek);ng++});
+  const ws=[...touched],P=proposal,secName=id=>(S.sections.find(x=>x.id===id)||{}).title||"";
+  if(ni||ng)S.imports.unshift({id:src,at:iso(new Date()),label:P.kind==="toc"?(P.book||secName(P.tocSec)||"Table of contents"):("Lesson pages: "+[...secsUsed].map(secName).filter(Boolean).join(", ")),kind:P.kind,items:ni,goals:ng,w1:Math.min(...ws),w2:Math.max(...ws),kid:multi()&&phKid!=="all"?phKid:""});
+  S.imports=S.imports.slice(0,40);
+  touched.forEach(w=>save(w));save("meta");const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;clearPicked();$("phMsg").textContent="";
+  if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}Sheet.close();
+  toastAction(ng?`Added ${plural(ni,"item")} and ${plural(ng,"goal")}.`:`Added ${plural(ni,"item")}.`,"Undo",()=>{restorePlan(snap);toast("Undone. Nothing was added.")})});
+/* Photo history: every batch added from photos, with a way to remove it later. */
+function importStats(id){let items=0,checked=0,edited=0;
+  for(const w in S.weeks){const W=S.weeks[w];
+    for(const sec in W.every||{})(W.every[sec]||[]).forEach(it=>{if(it.src!==id)return;items++;if(it.ed)edited++;if(Object.keys(S.checks).some(k=>k.startsWith(w+"-")&&k.endsWith("-"+it.id)))checked++});
+    for(const dk in W.days||{})for(const sec in W.days[dk])(W.days[dk][sec]||[]).forEach(it=>{if(it.src!==id)return;items++;if(it.ed)edited++;if(S.checks[ck(w,dk,it.id)])checked++})}
+  let goals=0;for(const w in S.goals)(S.goals[w]||[]).forEach(g=>{if(g.src===id)goals++});return {items,checked,edited,goals}}
+function removeImport(id,keepChecked){let n=0;
+  for(const w in S.weeks){const W=S.weeks[w];
+    for(const sec in W.every||{})W.every[sec]=(W.every[sec]||[]).filter(it=>{if(it.src!==id)return true;if(keepChecked&&Object.keys(S.checks).some(k=>k.startsWith(w+"-")&&k.endsWith("-"+it.id)))return true;n++;return false});
+    for(const dk in W.days||{})for(const sec in W.days[dk])W.days[dk][sec]=(W.days[dk][sec]||[]).filter(it=>{if(it.src!==id)return true;if(keepChecked&&S.checks[ck(w,dk,it.id)])return true;n++;return false})}
+  for(const w in S.goals)S.goals[w]=(S.goals[w]||[]).filter(g=>g.src!==id);
+  S.imports=S.imports.filter(x=>x.id!==id);return n}
+function importLine(x){const d=parseISO(x.at),k=x.kid&&kidById(x.kid);
+  return `${d?fmt(d):""}, ${plural(x.items,x.kind==="toc"?"lesson":"item")}${x.goals?` and ${plural(x.goals,"goal")}`:""}, ${x.w1===x.w2?"Week "+x.w1:`Weeks ${x.w1} to ${x.w2}`}${k?`, for ${esc(k.name)}`:""}`}
+function openImports(){
+  Sheet.open("Photo history",S.imports.length?`<p class="note" style="margin:0">Each time you add lessons from photos, they are kept together here. You can remove a whole batch.</p>
+    <ul class="mklist">${S.imports.map(x=>`<li><span class="t">${esc(x.label)}<small>${importLine(x)}</small></span><div class="row"><button class="btn fit" data-imprm="${esc(x.id)}">Remove these lessons</button></div></li>`).join("")}</ul>`
+    :`<p class="note" style="margin:0">Nothing added from photos yet.</p>`)}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-imprm]");if(b){const id=b.dataset.imprm,x=S.imports.find(y=>y.id===id);if(!x)return;const st=importStats(id);
+    Sheet.open("Remove these lessons?",`<p style="margin:0;font-weight:600">${esc(x.label)}</p><p class="note" style="margin:0">${importLine(x)}</p>
+      <p style="margin:0">This removes ${plural(st.items,"item")}${st.goals?` and ${plural(st.goals,"goal")}`:""} that are still in your planner.${st.edited?` You changed ${st.edited} of them after adding.`:""}</p>
+      ${st.checked?`<p style="margin:0">${st.checked} ${st.checked===1?"is":"are"} already checked off.</p><button class="btn" data-impgo="keep" data-id="${esc(id)}">Keep the ${st.checked} checked off, remove the rest</button><button class="btn danger" data-impgo="all" data-id="${esc(id)}">Remove all ${st.items}</button>`
+        :`<button class="btn danger" data-impgo="all" data-id="${esc(id)}">Remove ${plural(st.items,"item")}</button>`}`);return}
+  const g=e.target.closest("[data-impgo]");if(g){const snap=snapshotPlan();const n=removeImport(g.dataset.id,g.dataset.impgo==="keep");Object.keys(S.weeks).forEach(w=>save(+w));save("meta");Sheet.close();
+    toastAction(`Removed ${plural(n,"item")}.`,"Undo",()=>{restorePlan(snap);toast("Undone. The lessons are back.")})}});
 $("phDiscard").addEventListener("click",()=>{proposal=null;$("phResults").hidden=true;$("phMsg").textContent=""});
 
 /* ----- first-visit welcome ----- */

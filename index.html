@@ -321,6 +321,20 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .acc>summary::after{content:" +";color:var(--muted);font:400 1.2rem var(--sans)}.acc[open]>summary::after{content:" –"}
 .acc>summary{display:flex;justify-content:space-between;align-items:baseline}
 .nudge{border-radius:6px}
+.brklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.brklist button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:4px;padding:7px 6px;font:600 .85rem var(--sans);text-align:left;display:grid;gap:1px}
+.brklist button small{font-weight:400;color:var(--muted);font-size:.72rem}
+.brklist button[aria-pressed="true"]{background:var(--core-soft);border-color:var(--gold);border-style:dashed}
+.brklist button[aria-pressed="true"] small{color:var(--morn)}
+.daytabs button[data-off] b{text-decoration:line-through;text-decoration-thickness:1px;color:var(--muted)}
+.offcard{border-top:1px solid var(--line);padding:26px 0 10px;font-family:var(--sans)}
+.offcard h2{font:600 1.9rem var(--display);margin:0 0 6px}
+.offcard p{color:var(--muted);margin:0 0 12px}
+.mklist{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.mklist li{display:grid;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
+.mklist li:first-child{border-top:0}
+.mklist .t{font-weight:600}.mklist .t small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+.movebtn{all:unset;cursor:pointer;font:500 .8rem var(--sans);color:var(--muted);text-decoration:underline;text-underline-offset:3px;margin-left:30px}
 </style>
 </head>
 <body>
@@ -486,8 +500,10 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
         <label class="lbl">First day of school<input type="date" id="sStart"></label>
         <label class="lbl">Number of school weeks<input type="number" id="sWeeks" min="1" max="60"></label>
       </div>
-      <label class="lbl">Break weeks: the Monday of each week off, separated by commas
-        <input type="text" id="sBreaks" placeholder="2026-11-23, 2026-12-21, 2026-12-28"></label>
+      <div style="display:grid;gap:6px"><b style="font:600 .85rem var(--sans)">Break weeks</b>
+        <p class="note" style="margin:0">Tap a week to make it a break. Lessons after it move one week later. Change only weeks that have not happened yet.</p>
+        <div class="brklist" id="sBreakList"></div>
+        <input type="hidden" id="sBreaks"></div>
       <fieldset style="border:1px solid var(--line);border-radius:10px;padding:8px 12px">
         <legend class="note">School days</legend>
         <div class="row" id="sDays"></div>
@@ -572,7 +588,7 @@ function blank(){const d=new Date();const mon=new Date(d);mon.setDate(d.getDate(
   return {setup:{name:"Homeschool Day Planner",child:"",start:iso(mon),weeks:36,breaks:[],days:["mon","tue","wed","thu","fri"]},
     sections:JSON.parse(JSON.stringify(DEFAULT_SECTIONS)).map(x=>({...x,shared:!!SHARED_DEFAULT[x.id]})),kids:[],weeks:{},checks:{},notes:{},short:{},goals:{}}}
 /* ----- children ----- */
-function normalize(){if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
+function normalize(){S.off=S.off||{};S.skip=S.skip||{};S.extraDays=S.extraDays||{};if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
   S.sections.forEach(x=>{if(x.shared===undefined)x.shared=!!SHARED_DEFAULT[x.id]})}
 const multi=()=>S.kids.length>1;
 const kidById=id=>S.kids.find(k=>k.id===id);
@@ -631,7 +647,7 @@ function weekMondays(){
   return out;
 }
 function dateOf(w,dk){const m=weekMondays()[w-1];if(!m)return null;const d=new Date(m);d.setDate(m.getDate()+OFF[dk]);return d}
-function daysOf(w){const st=parseISO(S.setup.start);return DAYS.filter(d=>S.setup.days.includes(d[0])).filter(d=>{const dt=dateOf(w,d[0]);return !(st&&dt&&dt<st)})}
+function daysOf(w){const st=parseISO(S.setup.start),ex=(S.extraDays&&S.extraDays[w])||[];return DAYS.filter(d=>S.setup.days.includes(d[0])||ex.includes(d[0])).filter(d=>{const dt=dateOf(w,d[0]);return !(st&&dt&&dt<st)})}
 const sameDay=(a,b)=>a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 function todayPos(){const now=new Date();now.setHours(0,0,0,0);const n=weekMondays().length;
   for(let w=1;w<=n;w++)for(const d of daysOf(w)){if(dateOf(w,d[0])>=now)return {w,d:d[0]}}
@@ -681,7 +697,7 @@ function renderWeeks(){const now=todayPos();
   $("weeks").innerHTML=`<button class="todaybtn" data-today="1">Today</button>`+weekMondays().map((m,i)=>`<button data-w="${i+1}" aria-pressed="${i+1===curW}"${i+1===now.w?" data-now":""}>Wk ${i+1}<small>${fmt(m)}</small></button>`).join("");
   const sel=$("weeks").querySelector('[aria-pressed="true"]');if(sel)sel.scrollIntoView({block:"nearest",inline:"center"})}
 function renderTabs(){const now=new Date();
-  $("tabs").innerHTML=daysOf(curW).map(([k,l])=>{const d=dateOf(curW,k);return `<button data-d="${k}" aria-pressed="${k===cur}"${sameDay(d,now)?" data-today":""}>${l}<b>${d?d.getDate():""}</b></button>`}).join("")}
+  $("tabs").innerHTML=daysOf(curW).map(([k,l])=>{const d=dateOf(curW,k);return `<button data-d="${k}" aria-pressed="${k===cur}"${sameDay(d,now)?" data-today":""}${S.off[curW+"-"+k]?" data-off":""}>${l}<b>${d?d.getDate():""}</b></button>`}).join("")}
 function renderGoals(){const G=S.goals[curW]||[];const V=G.filter(goalVisible);
   $("goalForBox").innerHTML=multi()?`<select id="goalFor" aria-label="Who is this goal for" style="flex:0 1 130px">${[["all","Everyone"],...S.kids.map(k=>[k.id,k.name])].map(([v,l])=>`<option value="${esc(v)}" ${v===(curKid==="all"?"all":curKid)?"selected":""}>${esc(l)}</option>`).join("")}</select>`:"";
   $("goalsTitle").textContent="Week "+curW+" goals";
@@ -692,6 +708,8 @@ function renderGoals(){const G=S.goals[curW]||[];const V=G.filter(goalVisible);
 function itemLi(it,secId,o={}){const id=ck(curW,cur,it.id);
   return `<li><div class="item"><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span><span class="main">${o.subj?`<span class="subj">${esc(o.subj)}</span>`:""}${esc(it.t)}${it.every?`<span class="daily">daily</span>`:""}${o.tag?kidTag(it):""}</span></span></label><button class="dots" data-item="${it.id}" data-sec="${secId}" aria-label="Change ${esc(it.t)}">⋯</button>${it.n?`<details class="steps"><summary>Steps</summary><span class="n">${esc(it.n)}</span></details>`:""}</div></li>`}
 function renderDay(){
+  if(S.off[curW+"-"+cur]){const o=S.off[curW+"-"+cur],m=typeof o==="object"?o.moved||0:0,canUndo=lastOff&&lastOff.key===curW+"-"+cur;
+    $("day").innerHTML=`<div class="offcard"><h2>Day off</h2><p>${m?`${plural(m,"lesson")} moved to other days. `:""}Daily items are skipped today.</p><button class="btn" id="offUndo">${canUndo?"Undo the day off":"Make it a school day again"}</button></div>`;return}
   const sh=!!S.short[curW+"-"+cur];let n=0;const later=[];
   const secBlock=(sec,items,o={})=>{const hidden=sec.optional&&sh;if(!hidden)n++;
     return `<section class="block ${esc(sec.color||"core")}${hidden?" short-hidden":""}"><header><h2><span class="stepn">${n}</span>${esc(sec.title)}</h2>${multi()&&sec.shared?`<span class="who">Everyone</span>`:""}</header><div class="inner"><ul class="items">${items.map(it=>itemLi(it,sec.id,{tag:o.tag})).join("")}</ul><button class="addlink" data-addsec="${sec.id}">+ Add</button></div></section>`};
@@ -720,10 +738,10 @@ function renderDay(){
 function renderMissed(){
   const now=new Date();now.setHours(0,0,0,0);const out=[],n=weekMondays().length;
   for(let w=1;w<=n;w++)for(const [dk,l] of daysOf(w)){const d=dateOf(w,dk);if(!d||d>=now)continue;
-    if(S.setup.since&&iso(d)<S.setup.since)continue;
-    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).filter(visible).forEach(it=>{const id=ck(w,dk,it.id);const k=multi()&&it.kid&&kidById(it.kid);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:(k?k.name+", ":"")+sec.title,t:it.t})})})}
+    if(S.setup.since&&iso(d)<S.setup.since)continue;if(S.off[w+"-"+dk])continue;
+    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).filter(visible).forEach(it=>{const id=ck(w,dk,it.id);const k=multi()&&it.kid&&kidById(it.kid);if(!S.checks[id]&&!S.skip[id]&&!it.ex)out.push({id,w,dk,l,d,secId:sec.id,itId:it.id,every:!!it.every,sec:(k?k.name+", ":"")+sec.title,t:it.t})})})}
   missedN=out.length;$("missedCount").textContent=out.length?out.length+" to catch up":"all caught up";
-  $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)}, ${esc(x.sec)}</span></span></label></li>`).join("")||`<li class="note">Nothing missed.</li>`;
+  $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)}, ${esc(x.sec)}</span></span></label><button class="movebtn" data-mkup="${esc(x.w+"|"+x.dk+"|"+x.secId+"|"+x.itId+"|"+(x.every?1:0))}">Make it up</button></li>`).join("")||`<li class="note">Nothing missed.</li>`;
 }
 
 var missedN=0;
@@ -744,6 +762,8 @@ function openPanel(id){
   if(id==="photos"){Sheet.open("Fill from photos",$("photoPanel"));openPhotos();return}
   if(id==="setup"){kidDraft=null;fillSetup();fillPassUI();Sheet.open("Settings",$("setupPanel"));return}
   if(id==="password"){openPassword();return}
+  if(id==="dayoff"){openDayOff();return}
+  if(id==="weekoff"){openWeekOff();return}
   if(id==="invite"){loadInvites();Sheet.open("Invite families",$("invitePanel"));return}
   if(id==="note"){Sheet.open("Note for "+dayName(cur)+" "+(dateOf(curW,cur)?dateOf(curW,cur).getDate():""),`<textarea id="noteText" style="min-height:160px" placeholder="What went well? What should you do again?" aria-label="Note for today" autofocus>${esc(S.notes[curW+"-"+cur]||"")}</textarea><p class="note" style="margin:0">Saves as you type.</p>`);
     $("noteText").addEventListener("input",e=>{const k=curW+"-"+cur;if(e.target.value.trim())S.notes[k]=e.target.value;else delete S.notes[k];save(curW)});return}
@@ -752,6 +772,8 @@ function openPanel(id){
       <li><button data-open="photos">Fill from photos<small>Claude reads your teacher's book and plans the week</small></button></li>
       <li><button data-open="goals">Week goals<small>What your child should be able to do by the end of the week</small></button></li>
       ${missedN?`<li><button data-open="missed">Catch up<small>${missedN} unchecked from past days</small></button></li>`:""}
+      <li><button data-open="dayoff">Day off<small>Take ${esc(dateOf(curW,cur)?dateOf(curW,cur).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"}):dayName(cur))} off and choose when to make up its lessons</small></button></li>
+      <li><button data-open="weekoff">Take this week off<small>This week and everything after move one week later</small></button></li>
       <li><button id="copyNext">Copy this week to next week<small>Copies every item, not the checkmarks</small></button></li>
       <li><button data-open="setup">Settings<small>School dates, children, subjects, backups</small></button></li>
       ${isAdminFlag?`<li><button data-open="invite">Invite families<small>Send someone an invitation by email</small></button></li>`:""}
@@ -811,9 +833,98 @@ $("goalList").addEventListener("click",e=>{const G=S.goals[curW]||[];const b=e.t
 function confirmInline(b,msg,label){if(b.dataset.armed)return true;b.dataset.armed="1";const old=b.textContent;b.textContent=label||"Tap to confirm";toast(msg);setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=old}},4000);return false}
 function findItem(id){const W=wk(curW);for(const sec in W.every){const L=W.every[sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:true}}
   for(const sec in (W.days[cur]||{})){const L=W.days[cur][sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:false}}return null}
+
+/* ----- days off, weeks off, and making up lessons ----- */
+let lastOff=null;
+const slotKey=(w,dk)=>w+"|"+dk;
+/* School days after (w,dk), in order, skipping days off. */
+function slotsAfter(w,dk,limit){const out=[],n=weekMondays().length;let started=false;
+  for(let x=w;x<=n&&out.length<limit;x++)for(const [d] of daysOf(x)){if(!started){if(x===w&&d===dk){started=true}continue}if(!S.setup.days.includes(d))continue;if(!S.off[x+"-"+d])out.push([x,d]);if(out.length>=limit)break}
+  return out}
+function dayLabel(w,dk){const d=dateOf(w,dk);return d?d.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"}):dayName(dk)}
+function takeItem(w,dk,sec,id){const L=(((S.weeks[w]||{}).days||{})[dk]||{})[sec]||[];const i=L.findIndex(x=>x.id===id);if(i<0)return null;return L.splice(i,1)[0]}
+function putItem(w,dk,sec,it){const W=wk(w);W.days[dk]=W.days[dk]||{};(W.days[dk][sec]=W.days[dk][sec]||[]).push(it)}
+function moveCheck(fw,fd,tw,td,id){const a=ck(fw,fd,id),b=ck(tw,td,id);if(S.checks[a]){S.checks[b]=true;delete S.checks[a]}if(S.skip[a]){S.skip[b]=true;delete S.skip[a]}}
+function ensureDay(w,dk){if(!S.setup.days.includes(dk)){const L=(S.extraDays[w]=S.extraDays[w]||[]);if(!L.includes(dk))L.push(dk)}}
+function moveItem(fw,fd,sec,id,tw,td){const it=takeItem(fw,fd,sec,id);if(!it)return false;ensureDay(tw,td);putItem(tw,td,sec,it);moveCheck(fw,fd,tw,td,id);return true}
+/* Push back: lessons in one subject (and for one child) slide one school day later, starting at (w,dk). Items already there move to the next day, and so on. */
+function pushGroup(w,dk,sec,kid,extra){const slots=[[w,dk],...slotsAfter(w,dk,400)];const same=it=>(it.kid||"")===(kid||"");
+  const at=([x,d])=>(((S.weeks[x]||{}).days||{})[d]||{})[sec]||[];
+  const lists=slots.map(sl=>at(sl).filter(same));
+  slots.forEach(([x,d])=>{const L=at([x,d]);if(L.length)S.weeks[x].days[d][sec]=L.filter(it=>!same(it))});
+  let last=lists.length-1;while(last>0&&!lists[last].length)last--;
+  for(let i=0;i<=last;i++){const to=slots[Math.min(i+1,slots.length-1)];lists[i].forEach(it=>{putItem(to[0],to[1],sec,it);moveCheck(slots[i][0],slots[i][1],to[0],to[1],it.id)})}
+  if(extra){putItem(w,dk,sec,extra.it);moveCheck(extra.w,extra.dk,w,dk,extra.it.id)}}
+function pickDays(w,dk,count){const out=[],start=dateOf(w,dk);if(!start)return out;const mons=weekMondays().map(iso);
+  for(let i=1;i<=count;i++){const d=new Date(start);d.setDate(start.getDate()+i);const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));const wi=mons.indexOf(iso(mon));if(wi<0)continue;
+    const dkey=DAYS[(d.getDay()+6)%7][0];if(S.off[(wi+1)+"-"+dkey])continue;out.push([wi+1,dkey,d])}return out}
+function makeupSelect(w,dk,cls,opts){const nx=slotsAfter(w,dk,1)[0];
+  return `<select class="${cls}" aria-label="When to make it up">
+    ${opts.today?`<option value="today">${esc(opts.today)}</option><option value="todaypush">${esc(opts.today)}, and push the rest of this subject back</option>`:""}
+    ${nx?`<option value="next">Next school day (${esc(dayLabel(nx[0],nx[1]))})</option>`:""}
+    ${opts.push?`<option value="push">Push this subject back one day</option>`:""}
+    <optgroup label="Pick a day">${pickDays(w,dk,21).map(([x,d,dt])=>`<option value="day:${x}|${d}">${esc(dt.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"}))}${S.setup.days.includes(d)?"":" (make-up day)"}</option>`).join("")}</optgroup>
+    <option value="skip">Skip it</option></select>`}
+function openDayOff(){const key=curW+"-"+cur;if(S.off[key]){toast("This is already a day off");return}
+  const W=S.weeks[curW]||{every:{},days:{}},items=[];S.sections.forEach(sec=>(((W.days||{})[cur]||{})[sec.id]||[]).forEach(it=>items.push({sec,it})));
+  const daily=S.sections.some(sec=>((W.every||{})[sec.id]||[]).length),nx=slotsAfter(curW,cur,1)[0];
+  Sheet.open("Day off",`<p class="note" style="margin:0">${esc(dayLabel(curW,cur))}. Choose when to make up this day's lessons.</p>
+    ${items.length?`<div class="seg" role="group" aria-label="Make-up plan"><button type="button" data-offmode="next" aria-pressed="false">Next day</button><button type="button" data-offmode="push" aria-pressed="true">Push back</button><button type="button" data-offmode="each" aria-pressed="false">Choose each</button></div>
+    <p class="note" id="offExplain" style="margin:0"></p>
+    <ul class="mklist" id="offEach" hidden>${items.map((x,i)=>`<li><span class="t">${esc(x.it.t)}<small>${esc(x.sec.title)}${multi()&&x.it.kid&&kidById(x.it.kid)?", "+esc(kidById(x.it.kid).name):""}</small></span>${makeupSelect(curW,cur,"offSel",{push:true}).replace('class="offSel"',`class="offSel" data-i="${i}"`)}</li>`).join("")}</ul>`:`<p class="note" style="margin:0">There are no lessons to move on this day.</p>`}
+    ${daily?`<p class="note" style="margin:0">Daily items, like Morning Time, are skipped for the day.</p>`:""}
+    <button class="btn primary" id="offGo">Take the day off</button>`);
+  const explain={next:nx?`All of this day's lessons move to ${dayLabel(nx[0],nx[1])}. That day gets fuller.`:"There is no school day after this one.",push:"Every lesson slides one school day later, so you keep the same pace. Each subject ends one day later.",each:"Choose when to make up each lesson."};
+  const setMode=m=>{document.querySelectorAll("[data-offmode]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.offmode===m)));if($("offExplain"))$("offExplain").textContent=explain[m];if($("offEach"))$("offEach").hidden=m!=="each";$("sheetBody").dataset.offmode=m};
+  setMode("push");
+  $("sheetBody").onclick=e=>{const b=e.target.closest("[data-offmode]");if(b)setMode(b.dataset.offmode)};
+  $("offGo").onclick=()=>{const mode=$("sheetBody").dataset.offmode||"push";lastOff={key,weeks:JSON.stringify(S.weeks),checks:JSON.stringify(S.checks),skip:JSON.stringify(S.skip),extra:JSON.stringify(S.extraDays)};
+    const choice=items.map((x,i)=>mode==="each"?(document.querySelector(`.offSel[data-i="${i}"]`)||{}).value||"push":mode);let moved=0;const pushes=new Set();
+    items.forEach((x,i)=>{const c=choice[i];
+      if(c==="next"&&nx){if(moveItem(curW,cur,x.sec.id,x.it.id,nx[0],nx[1]))moved++}
+      else if(c.startsWith("day:")){const [tw,td]=c.slice(4).split("|");if(moveItem(curW,cur,x.sec.id,x.it.id,+tw,td))moved++}
+      else if(c==="skip"){S.skip[ck(curW,cur,x.it.id)]=true}
+      else if(c==="push"){pushes.add(x.sec.id+"\u0001"+(x.it.kid||""))}});
+    pushes.forEach(g=>{const [sec,kid]=g.split("\u0001");const n0=((((S.weeks[curW]||{}).days||{})[cur]||{})[sec]||[]).filter(it=>(it.kid||"")===kid).length;pushGroup(curW,cur,sec,kid);moved+=n0});
+    S.off[key]={moved};Object.keys(S.weeks).forEach(w=>save(+w));save("meta");Sheet.close(true);render();toast(moved?`Day off. ${plural(moved,"lesson")} moved.`:"Day off")};
+}
+document.addEventListener("click",e=>{if(e.target.id!=="offUndo")return;const key=curW+"-"+cur;
+  if(lastOff&&lastOff.key===key){S.weeks=JSON.parse(lastOff.weeks);S.checks=JSON.parse(lastOff.checks);S.skip=JSON.parse(lastOff.skip);S.extraDays=JSON.parse(lastOff.extra);lastOff=null;toast("Day off undone. Lessons are back.")}
+  else toast("It is a school day again. Moved lessons stay where they are.");
+  delete S.off[key];Object.keys(S.weeks).forEach(w=>save(+w));save("meta");render()});
+/* Make up one missed lesson from Catch up. */
+function openMakeup(w,dk,sec,id,every){const it=itemsFor(w,dk,sec).find(x=>x.id===id);if(!it)return;let tp=todayPos();
+  const isOff=!!S.off[tp.w+"-"+tp.d];if(isOff){const nx=slotsAfter(tp.w,tp.d,1)[0];if(nx)tp={w:nx[0],d:nx[1]}}const todayLbl=isOff?dayLabel(tp.w,tp.d):"Today";const secT=(S.sections.find(x=>x.id===sec)||{}).title||"";
+  Sheet.open("Make it up",`<p style="margin:0;font-weight:600">${esc(it.t)}</p><p class="note" style="margin:0">${esc(secT)}, from ${esc(dayLabel(w,dk))}</p>
+    ${every?`<p class="note" style="margin:0">This is a daily item. You can do it today, or skip it.</p><select id="mkSel"><option value="todaycopy">${esc(todayLbl)}</option><option value="skip">Skip it</option></select>`:makeupSelect(tp.w,tp.d,"mkSel",{today:todayLbl}).replace('class="mkSel"','id="mkSel"').replace(/<option value="day:/g,'<option value="day:')}
+    <button class="btn primary" id="mkGo">Save</button>`,()=>{});
+  $("mkGo").onclick=()=>{const c=$("mkSel").value,oldKey=ck(w,dk,id);let msg="Saved";
+    if(c==="skip"){S.skip[oldKey]=true;msg="Skipped"}
+    else if(c==="todaycopy"){S.skip[oldKey]=true;putItem(tp.w,tp.d,sec,{id:uid(),t:it.t,n:it.n,...(it.kid?{kid:it.kid}:{})});msg="Added to today"}
+    else if(c==="today"){moveItem(w,dk,sec,id,tp.w,tp.d);msg=isOff?"Moved to "+todayLbl:"Moved to today"}
+    else if(c==="todaypush"){const x=takeItem(w,dk,sec,id);if(x){pushGroup(tp.w,tp.d,sec,x.kid||"",{w,dk,it:x});msg=(isOff?"Moved to "+todayLbl:"Moved to today")+". The rest moved back one day."}}
+    else if(c==="next"){const nx=slotsAfter(tp.w,tp.d,1)[0];if(nx){moveItem(w,dk,sec,id,nx[0],nx[1]);msg="Moved to "+dayLabel(nx[0],nx[1])}}
+    else if(c.startsWith("day:")){const [tw,td]=c.slice(4).split("|");moveItem(w,dk,sec,id,+tw,td);msg="Moved to "+dayLabel(+tw,td)}
+    Object.keys(S.weeks).forEach(x=>save(+x));save("meta");Sheet.close();toast(msg)}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-mkup]");if(!b)return;e.preventDefault();const [w,dk,sec,id,ev]=b.dataset.mkup.split("|");openMakeup(+w,dk,sec,id,ev==="1")});
+/* Take this week off: the Monday of this week becomes a break, so this week and everything after move one week later. */
+function openWeekOff(){const m=weekMondays()[curW-1];if(!m)return;
+  Sheet.open("Take this week off",`<p style="margin:0">The week of ${esc(fmt(m))} becomes a break. This week's lessons and everything after move one week later. Checkmarks move with them.</p>
+    <p class="note" style="margin:0">This works best at the start of a week. To miss only a day or two, use Day off.</p>
+    <button class="btn primary" id="wkOffGo">Take the week off</button>`);
+  $("wkOffGo").onclick=()=>{const br=new Set(S.setup.breaks||[]);br.add(iso(m));S.setup.breaks=[...br].sort();save("meta");Sheet.close(true);render();toast(`The week of ${fmt(m)} is a break. Your plan moved one week later.`)}}
+/* Break weeks in Settings: tap a week to make it a break. */
+function renderBreakList(){const st=parseISO(S.setup.start);if(!st){$("sBreakList").innerHTML="";return}
+  const br=new Set($("sBreaks").value.split(",").map(x=>x.trim()).filter(Boolean)),weeks=Math.max(1,parseInt($("sWeeks").value,10)||S.setup.weeks);
+  const mon=new Date(st);mon.setDate(st.getDate()-((st.getDay()+6)%7));const out=[];let n=0,guard=0;
+  while(n<weeks&&guard++<120){const k=iso(mon),isB=br.has(k);if(!isB)n++;out.push(`<button type="button" data-brk="${k}" aria-pressed="${isB}">${esc(fmt(mon))}<small>${isB?"Break":"Week "+n}</small></button>`);mon.setDate(mon.getDate()+7)}
+  $("sBreakList").innerHTML=out.join("")}
+$("sBreakList").addEventListener("click",e=>{const b=e.target.closest("[data-brk]");if(!b)return;const br=new Set($("sBreaks").value.split(",").map(x=>x.trim()).filter(Boolean));
+  if(br.has(b.dataset.brk))br.delete(b.dataset.brk);else br.add(b.dataset.brk);$("sBreaks").value=[...br].sort().join(", ");renderBreakList()});
+$("sStart").addEventListener("change",renderBreakList);$("sWeeks").addEventListener("input",renderBreakList);
 /* ----- setup ----- */
 function fillSetup(){
-  $("sName").value=S.setup.name||"";renderKidList();$("sStart").value=S.setup.start||"";$("sWeeks").value=S.setup.weeks;$("sBreaks").value=(S.setup.breaks||[]).join(", ");
+  $("sName").value=S.setup.name||"";renderKidList();$("sStart").value=S.setup.start||"";$("sWeeks").value=S.setup.weeks;$("sBreaks").value=(S.setup.breaks||[]).join(", ");renderBreakList();
   $("sDays").innerHTML=DAYS.map(([k,l])=>`<label class="fit" style="font-family:var(--sans);font-size:.9rem"><input type="checkbox" value="${k}" ${S.setup.days.includes(k)?"checked":""}> ${l}</label>`).join("");
   $("secList").innerHTML=S.sections.map((s,i)=>`<div class="secedit" data-i="${i}">
     <div class="row"><input type="text" data-s="title" value="${esc(s.title)}" aria-label="Section name"><input type="text" data-s="tag" value="${esc(s.tag||"")}" placeholder="Short label (optional)" aria-label="Section label"></div>

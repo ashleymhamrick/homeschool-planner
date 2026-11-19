@@ -486,37 +486,28 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
       <div style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">What are the photos of?</b>
         <div class="seg" role="group" aria-label="What are the photos of"><button type="button" data-phkind="lessons" aria-pressed="true">Lesson pages</button><button type="button" data-phkind="toc" aria-pressed="false">Table of contents</button></div>
       </div>
-      <div id="phTocOpts" hidden style="display:grid;gap:10px">
-        <p class="note" style="margin:0">Claude lists the lessons in order. The planner puts them on your school days and skips break weeks. It does not write steps, because a table of contents does not say how to teach. You can add steps later.</p>
+      <div id="phPlanBox" style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">How should Lucerna plan them?</b>
+        <div class="seg" role="group" aria-label="How to plan"><button type="button" data-phplan="spread" aria-pressed="true">Spread through the year</button><button type="button" data-phplan="follow" aria-pressed="false">Follow the book's days</button></div>
+      </div>
+      <p class="note" id="phPlanNote" style="margin:0"></p>
+      <div id="phTocOpts" style="display:grid;gap:10px">
         <div class="row">
           <label class="lbl">Subject<select id="phTocSec"></select></label>
-          <label class="lbl">Lessons each week<input type="number" id="phPace" min="1" max="20" value="5" inputmode="numeric"></label>
+          <label class="lbl"><span id="phPaceLbl">Lessons each week</span><input type="number" id="phPace" min="1" max="20" value="5" inputmode="numeric"></label>
         </div>
         <label class="lbl">Start in<select id="phTocWeek"></select></label>
       </div>
-      <ol class="steps3">
-        <li><b>1. Photos</b>Take photos of one week of lessons in your teacher's book.</li>
-        <li><b>2. Claude reads</b>Claude puts each lesson in your day. It writes the steps.</li>
-        <li><b>3. You check</b>Read the list and fix errors. Then add it to your planner.</li>
-      </ol>
+      <div id="phFollowOpts" hidden style="display:grid;gap:10px"><label class="lbl">The book's first week goes in<select id="phWeek"></select></label></div>
       <div id="photoUnavailable" class="hint" hidden></div>
       <div id="photoForm" style="display:grid;gap:10px">
         <div class="phpick">
           <label class="btn primary">Take a photo<input type="file" id="phCam" accept="image/*" capture="environment" hidden></label>
           <label class="btn">Choose photos<input type="file" id="phFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden></label>
         </div>
-        <p class="note" style="margin:0">Take one page at a time, or choose several from your photos. Each new photo is added to the list.</p>
+        <p class="note" style="margin:0">Take one page at a time, or choose several from your photos. A whole book is fine. Each new photo is added to the list, in order.</p>
         <ul class="phthumbs" id="phThumbs" hidden></ul>
         <span class="note" id="phCount"></span>
         <details class="more"><summary>More options</summary><div style="display:grid;gap:10px;margin-top:10px">
-        <div class="row">
-          <label class="lbl">What the photos show
-            <select id="phMode"><option value="one">One week of lessons</option><option value="many">More than one week of lessons</option></select>
-          </label>
-          <label class="lbl">Put the lessons in
-            <select id="phWeek"></select>
-          </label>
-        </div>
         <label class="lbl">Tell Claude more (optional)
           <textarea id="phNote" placeholder="Example: This is our math book. We do math 4 days each week."></textarea>
         </label>
@@ -1111,13 +1102,36 @@ $("resetBtn").addEventListener("click",e=>{if(!confirmInline(e.target,"This eras
 let sampleNS=null,limits=null,phAbort=null,proposal=null;
 function renderPhotoWeeks(){for(const id of ["phWeek","phTocWeek"]){const sel=$(id),v=sel.value||String(curW);sel.innerHTML=weekMondays().map((m,i)=>`<option value="${i+1}">Week ${i+1} (${fmt(m)})</option>`).join("");sel.value=String(Math.min(+v||curW,weekMondays().length))}}
 let phKind="lessons";
-function setPhKind(k){phKind=k;document.querySelectorAll("[data-phkind]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.phkind===k)));$("phTocOpts").hidden=k!=="toc";
-  document.querySelectorAll("#photoPanel .steps3, #photoPanel .more").forEach(el=>el.hidden=k==="toc")}
+let phPlan="spread";
+function setPhKind(k){phKind=k;document.querySelectorAll("[data-phkind]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.phkind===k)));updatePhPlan()}
+function updatePhPlan(){const toc=phKind==="toc",spread=toc||phPlan==="spread";
+  document.querySelectorAll("[data-phplan]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.phplan===phPlan)));
+  $("phPlanBox").hidden=toc;$("phTocOpts").hidden=!spread;$("phFollowOpts").hidden=spread;
+  const sel=$("phTocSec"),cur_=sel.value,secs=S.sections.filter(x=>!x.shared).concat(S.sections.filter(x=>x.shared));
+  sel.innerHTML=(toc?"":`<option value="">Let Claude choose for each lesson</option>`)+secs.map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join("");
+  sel.value=[...sel.options].some(o=>o.value===cur_)?cur_:(toc?(secs.find(x=>x.id==="math")||secs[0]||{}).id||"":"");
+  $("phPaceLbl").textContent=toc||sel.value?"Lessons each week":"Lessons each week, per subject";
+  $("phPlanNote").textContent=toc?"Claude lists the lessons in order. Lucerna puts them on your school days and skips break weeks. A table of contents does not say how to teach, so there are no steps. You can add steps later."
+    :spread?"Claude lists every lesson in order and writes the steps. Lucerna puts them on your school days, one after another, through the whole year. It skips break weeks."
+    :"For teacher's manuals that already say which week and day. Lucerna keeps the book's schedule.";}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-phplan]");if(b){phPlan=b.dataset.phplan;updatePhPlan()}});
+$("phTocSec").addEventListener("change",updatePhPlan);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-phkind]");if(b)setPhKind(b.dataset.phkind)});
 /* Spread lessons from a table of contents across school weeks: N a week, evenly over the school days, in book order. */
-function scheduleLessons(titles,secId,pace,startW,photos){const days=DAYS.map(d=>d[0]).filter(d=>S.setup.days.includes(d)),D=days.length||1,n=weekMondays().length;
-  const items=[];titles.forEach((t,i)=>{const wkOff=Math.floor(i/pace),slot=i%pace,day=days[Math.min(D-1,Math.floor((slot+.5)*D/pace))];
-    items.push({week:wkOff+1,day,section:secId,title:t,notes:"",photo:(photos&&photos[i])||0,on:startW+wkOff<=n})});return items}
+/* Lessons in book order, one subject at a time: each subject's lessons fill its school days in order at the chosen pace. */
+function scheduleSeq(lessons,pace,startW,forceSec){const by=new Map(),fallback=(S.sections.find(x=>x.id==="extra")||S.sections[0]||{}).id;
+  lessons.forEach(l=>{const sec=forceSec||(S.sections.some(x=>x.id===l.section)?l.section:fallback);if(!by.has(sec))by.set(sec,[]);by.get(sec).push(l)});
+  const out=[];by.forEach((L,sec)=>scheduleLessons(L.map(l=>l.title),sec,pace,startW,L.map(l=>l.photo),L.map(l=>l.notes)).forEach(x=>out.push(x)));
+  return {items:out,weeks:Math.max(0,...out.map(x=>x.week)),subjects:by.size}}
+function scheduleLessons(titles,secId,pace,startW,photos,notes){const days=DAYS.map(d=>d[0]).filter(d=>S.setup.days.includes(d)),D=days.length||1,n=weekMondays().length;
+  const today=new Date();today.setHours(0,0,0,0);
+  const pattern=Array.from({length:pace},(_,slot)=>days[Math.min(D-1,Math.floor((slot+.5)*D/pace))]);
+  const items=[];let i=0,w=startW;
+  while(i<titles.length&&w<startW+600){for(const day of pattern){if(i>=titles.length)break;
+      if(w<=n){const dt=dateOf(w,day);if(dt&&dt<today)continue;if(S.off[w+"-"+day])continue}
+      items.push({week:w-startW+1,day,section:secId,title:titles[i],notes:(notes&&notes[i])||"",photo:(photos&&photos[i])||0,on:w<=n});i++}
+    w++}
+  return items}
 /* Photos add up across picks, so a parent can take one page at a time. */
 let phPicked=[];
 function renderPicked(){const n=phPicked.length;phPicked.forEach(x=>{if(!x.url)x.url=URL.createObjectURL(x.f)});
@@ -1131,8 +1145,7 @@ $("phThumbs").addEventListener("click",e=>{const b=e.target.closest("[data-phrm]
 let phKid="all";
 function renderPhFor(){$("phForBox").innerHTML=multi()?`<div style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">Who is this book for?</b><div class="kids" style="margin:0">${[...S.kids.map(k=>[k.id,k.name,k.color]),["all","Everyone",""]].map(([v,l,c])=>`<button type="button" data-phfor="${esc(v)}" aria-pressed="${v===phKid}">${c?`<span class="kdot" style="background:${esc(c)}"></span>`:""}${esc(l)}</button>`).join("")}</div><p class="note" style="margin:0">Pick Everyone for books you teach together, like Morning Time or read aloud.</p></div>`:""}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-phfor]");if(b){phKid=b.dataset.phfor;renderPhFor()}});
-function openPhotos(){$("phWeek").value=String(curW);$("phTocWeek").value=String(curW);setPhKind("lessons");
-  const secs=S.sections.filter(x=>!x.shared).concat(S.sections.filter(x=>x.shared));$("phTocSec").innerHTML=secs.map(x=>`<option value="${esc(x.id)}" ${x.id==="math"?"selected":""}>${esc(x.title)}</option>`).join("");
+function openPhotos(){$("phWeek").value=String(curW);$("phTocWeek").value=String(curW);setPhKind(phKind||"lessons");
   if(!$("phPace").dataset.touched)$("phPace").value=String(Math.max(1,S.setup.days.length));phKid=multi()?(curKid!=="all"?curKid:S.kids[0].id):"all";renderPhFor();
   const ok=Store.mode==="cloud";limits=ok?{images:{maxCount:5,maxInputBytes:30e6,mediaTypes:["image/jpeg","image/png","image/webp","image/gif"]}}:false;
   $("photoForm").hidden=!ok;const u=$("photoUnavailable");u.hidden=ok;
@@ -1161,34 +1174,55 @@ async function readPhotos(files,mode,note,carry,signal,last){
 $("phGo").addEventListener("click",async()=>{
   const files=phPicked.map(x=>x.f);if(!files.length){toast("Take or choose at least one photo");return}
   if(!limits||!limits.images)return;
-  const max=Math.max(1,limits.images.maxCount),tooBig=files.filter(f=>f.size>limits.images.maxInputBytes),ok=files.filter(f=>f.size<=limits.images.maxInputBytes);
-  const toc=phKind==="toc",mode=toc?"toc":$("phMode").value,note=$("phNote").value.trim(),startW=toc?(+$("phTocWeek").value||curW):(+$("phWeek").value||curW);
-  const pace=Math.max(1,Math.min(20,parseInt($("phPace").value,10)||5)),tocSec=$("phTocSec").value;let lessons=[],lessonPhotos=[],book="";
+  const tooBig=files.filter(f=>f.size>limits.images.maxInputBytes),ok=files.filter(f=>f.size<=limits.images.maxInputBytes);
+  const toc=phKind==="toc",seq=!toc&&phPlan==="spread",mode=toc?"toc":seq?"seq":"many",note=$("phNote").value.trim();
+  const startW=(toc||seq)?(+$("phTocWeek").value||curW):(+$("phWeek").value||curW);
+  const pace=Math.max(1,Math.min(20,parseInt($("phPace").value,10)||5)),tocSec=$("phTocSec").value;
+  const max=seq?3:Math.max(1,limits.images.maxCount);
   const batches=[];for(let i=0;i<ok.length;i+=max)batches.push(ok.slice(i,i+max));
   phAbort=new AbortController();$("phGo").disabled=true;$("phStop").hidden=false;
-  const all={items:[],goals:[],warnings:tooBig.map(f=>`${f.name} is too large to send. Try a smaller photo.`)};let lastWeek=0;
+  const all={items:[],goals:[],warnings:tooBig.map(f=>`${f.name} is too large to send. Try a smaller photo.`)};let lastWeek=0,book="";
+  const results=new Array(batches.length);let done=0,failed=[];
+  const pnFor=b=>x=>{const k=parseInt(x&&x.photo,10);return k>0&&k<=batches[b].length?b*max+k:0};
+  const progress=()=>{$("phMsg").textContent=`Reading your photos: ${Math.min(ok.length,done*max)} of ${ok.length} done…`};
+  let stopErr=null;
   try{
-    for(let b=0;b<batches.length;b++){
-      $("phMsg").textContent=`Reading photos ${b*max+1}–${b*max+batches[b].length} of ${ok.length}…`;
-      const res=await readPhotos(batches[b],mode,note,toc?lessons.length:lastWeek,phAbort.signal,toc?(lessons[lessons.length-1]||""):"");
-      const base=b*max,pn=x=>{const k=parseInt(x&&x.photo,10);return k>0&&k<=batches[b].length?base+k:0};
-      if(toc){(Array.isArray(res&&res.lessons)?res.lessons:[]).forEach(x=>{const t=String(x&&x.title||"").trim();if(t&&(!lessons.length||lessons[lessons.length-1].toLowerCase()!==t.toLowerCase())){lessons.push(t);lessonPhotos.push(pn(x))}});
-        if(res&&res.book&&!book)book=res.book;(Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));continue}
-      const items=Array.isArray(res&&res.items)?res.items:[];
-      items.forEach(x=>{const w=mode==="one"?1:Math.max(1,parseInt(x.week,10)||1);lastWeek=Math.max(lastWeek,w);all.items.push({...x,week:w,photo:pn(x)})});
-      (Array.isArray(res&&res.goals)?res.goals:[]).forEach(g=>all.goals.push({week:mode==="one"?1:Math.max(1,parseInt(g.week,10)||1),text:String(g.text||g||"")}));
-      (Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));
+    if(seq){
+      // Whole books: read several batches at once; retry a failed batch once, then keep going.
+      let next=0;progress();
+      const worker=async()=>{while(next<batches.length&&!phAbort.signal.aborted){const b=next++;
+        for(let attempt=0;attempt<2;attempt++){try{results[b]=await readPhotos(batches[b],mode,note,0,phAbort.signal,"");break}
+          catch(e){if(e&&["cancelled","limit","signed_out","not_configured"].includes(e.code))throw e;if(attempt===1)failed.push(b)}}
+        done++;progress()}};
+      await Promise.all([worker(),worker(),worker()]);
+    }else{
+      for(let b=0;b<batches.length;b++){
+        $("phMsg").textContent=`Reading photos ${b*max+1}–${b*max+batches[b].length} of ${ok.length}…`;
+        const prev=toc?results.slice(0,b).flatMap(r=>(r&&r.lessons)||[]):[];
+        results[b]=await readPhotos(batches[b],mode,note,toc?prev.length:lastWeek,phAbort.signal,toc?((prev[prev.length-1]||{}).title||""):"");
+        if(!toc)((results[b]&&results[b].items)||[]).forEach(x=>{lastWeek=Math.max(lastWeek,Math.max(1,parseInt(x.week,10)||1))});
+      }
     }
-    if(toc){all.items=scheduleLessons(lessons,tocSec,pace,startW,lessonPhotos);const weeks=Math.ceil(lessons.length/pace),n=weekMondays().length,endW=startW+weeks-1,over=all.items.filter(x=>!x.on).length;
-      if(over)all.warnings.push(`${plural(over,"lesson")} do not fit before your last school week (Week ${n}). They are not checked. Add more school weeks in Settings, or choose more lessons each week.`);
-      $("phMsg").textContent=lessons.length?`Claude found ${plural(lessons.length,"lesson")}${book?" in "+book:""}. At ${pace} a week, they fill ${plural(weeks,"week")} (Week ${startW} to Week ${Math.min(endW,n)}).`:"Claude did not find lessons in these photos.";}
-    else $("phMsg").textContent=all.items.length?`Claude found ${plural(all.items.length,"item")}. Check ${all.items.length===1?"it":"them"} below.`:"Claude did not find lessons in these photos.";
-  }catch(e){
-    const code=e&&e.code;
-    const msg={limit:e&&e.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can still add lessons by hand with the + Add links.",upstream:e&&e.message,cancelled:"Stopped.",not_granted:"This page isn't allowed to use Claude. Allow it when asked, then try again.",sampling_disabled:"Claude isn't available for this account.",images_unavailable:"This view can't send photos to Claude.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",rate_limited:"You've reached a usage limit for now. Try again later.",session_expired:"Please sign in to Claude again, then retry.",refused:"Claude couldn't help with those pages. Try different photos.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once.",empty_completion:"Claude didn't return anything. Try fewer or clearer photos.",prompt_too_large:"That's too much at once. Try fewer photos or a shorter note."}[code]||"Something went wrong reading the photos. Try again.";
-    $("phMsg").textContent=(all.items.length?"Claude stopped before the end. ":"")+msg;
-  }finally{$("phGo").disabled=false;$("phStop").hidden=true;phAbort=null}
-  if(all.items.length||all.goals.length){proposal={start:startW,...all,kind:toc?"toc":"lessons",book,tocSec};showProposal()}
+  }catch(e){stopErr=e}
+  // Put together whatever was read, in photo order.
+  const lessons=[];
+  results.forEach((res,b)=>{if(!res)return;const pn=pnFor(b);if(res.book&&!book)book=res.book;(res.warnings||[]).forEach(w=>all.warnings.push(String(w)));
+    if(toc||seq){(res.lessons||[]).forEach(x=>{const t=String(x&&x.title||"").trim();if(!t)return;const prev=lessons[lessons.length-1];if(prev&&prev.title.toLowerCase()===t.toLowerCase())return;lessons.push({title:t,notes:String(x.notes||""),section:String(x.section||""),photo:pn(x)})});return}
+    (res.items||[]).forEach(x=>all.items.push({...x,week:Math.max(1,parseInt(x.week,10)||1),photo:pn(x)}));
+    (res.goals||[]).forEach(g=>all.goals.push({week:Math.max(1,parseInt(g.week,10)||1),text:String(g.text||g||"")}))});
+  failed.sort((a,b)=>a-b).forEach(b=>all.warnings.push(`${batches[b].length>1?`Photos ${b*max+1} to ${b*max+batches[b].length}`:`Photo ${b*max+1}`} could not be read. Lessons from those pages are missing. Take them again and add them after this.`));
+  const n=weekMondays().length;let msg="";
+  if(toc||seq){
+    const sch=toc?(it=>({items:it,weeks:Math.max(0,...it.map(x=>x.week)),subjects:1}))(scheduleLessons(lessons.map(l=>l.title),tocSec,pace,startW,lessons.map(l=>l.photo))):scheduleSeq(lessons,pace,startW,tocSec);
+    all.items=sch.items;const over=all.items.filter(x=>!x.on).length,endW=Math.min(n,startW+sch.weeks-1);
+    if(over)all.warnings.push(`${plural(over,"lesson")} do not fit before your last school week (Week ${n}). They are not checked. Add more school weeks in Settings, or choose more lessons each week.`);
+    msg=lessons.length?`Claude found ${plural(lessons.length,"lesson")}${book?" in "+book:""}${sch.subjects>1?` in ${sch.subjects} subjects`:""}. At ${pace} a week${sch.subjects>1?" per subject":""}, they fill ${plural(sch.weeks,"week")} (Week ${startW} to Week ${endW}).`:"Claude did not find lessons in these photos."}
+  else msg=all.items.length?`Claude found ${plural(all.items.length,"item")}. Check ${all.items.length===1?"it":"them"} below.`:"Claude did not find lessons in these photos.";
+  if(stopErr){const code=stopErr.code;
+    const em={limit:stopErr.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can still add lessons by hand with the + Add links.",upstream:stopErr.message,cancelled:"Stopped.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once."}[code]||"Something went wrong reading the photos. Try again.";
+    msg=(all.items.length?"Claude stopped before the end. ":"")+em+(all.items.length?" "+msg:"")}
+  $("phMsg").textContent=msg;$("phGo").disabled=false;$("phStop").hidden=true;phAbort=null;
+  if(all.items.length||all.goals.length){proposal={start:startW,...all,kind:mode==="many"?"lessons":mode,book,tocSec};showProposal()}
 });
 $("phStop").addEventListener("click",()=>{if(phAbort)phAbort.abort()});
 function showProposal(){
@@ -1216,7 +1250,7 @@ $("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new S
     if(x.day==="every")(W.every[x.section]=W.every[x.section]||[]).push(it);else{W.days[x.day]=W.days[x.day]||{};(W.days[x.day][x.section]=W.days[x.day][x.section]||[]).push(it)}touched.add(x.realWeek);ni++});
   proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300),src,...(multi()&&phKid!=="all"&&kidById(phKid)?{kid:phKid}:{})});touched.add(g.realWeek);ng++});
   const ws=[...touched],P=proposal,secName=id=>(S.sections.find(x=>x.id===id)||{}).title||"";
-  if(ni||ng)S.imports.unshift({id:src,at:iso(new Date()),label:P.kind==="toc"?(P.book||secName(P.tocSec)||"Table of contents"):("Lesson pages: "+[...secsUsed].map(secName).filter(Boolean).join(", ")),kind:P.kind,items:ni,goals:ng,w1:Math.min(...ws),w2:Math.max(...ws),kid:multi()&&phKid!=="all"?phKid:""});
+  if(ni||ng)S.imports.unshift({id:src,at:iso(new Date()),label:P.kind==="toc"?(P.book||secName(P.tocSec)||"Table of contents"):P.kind==="seq"?(P.book||"Whole book: "+[...secsUsed].map(secName).filter(Boolean).join(", ")):("Lesson pages: "+[...secsUsed].map(secName).filter(Boolean).join(", ")),kind:P.kind,items:ni,goals:ng,w1:Math.min(...ws),w2:Math.max(...ws),kid:multi()&&phKid!=="all"?phKid:""});
   S.imports=S.imports.slice(0,40);
   touched.forEach(w=>save(w));save("meta");const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;clearPicked();$("phMsg").textContent="";
   if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}Sheet.close();
@@ -1234,7 +1268,7 @@ function removeImport(id,keepChecked){let n=0;
   for(const w in S.goals)S.goals[w]=(S.goals[w]||[]).filter(g=>g.src!==id);
   S.imports=S.imports.filter(x=>x.id!==id);return n}
 function importLine(x){const d=parseISO(x.at),k=x.kid&&kidById(x.kid);
-  return `${d?fmt(d):""}, ${plural(x.items,x.kind==="toc"?"lesson":"item")}${x.goals?` and ${plural(x.goals,"goal")}`:""}, ${x.w1===x.w2?"Week "+x.w1:`Weeks ${x.w1} to ${x.w2}`}${k?`, for ${esc(k.name)}`:""}`}
+  return `${d?fmt(d):""}, ${plural(x.items,x.kind==="toc"||x.kind==="seq"?"lesson":"item")}${x.goals?` and ${plural(x.goals,"goal")}`:""}, ${x.w1===x.w2?"Week "+x.w1:`Weeks ${x.w1} to ${x.w2}`}${k?`, for ${esc(k.name)}`:""}`}
 function openImports(){
   Sheet.open("Photo history",S.imports.length?`<p class="note" style="margin:0">Each time you add lessons from photos, they are kept together here. You can remove a whole batch.</p>
     <ul class="mklist">${S.imports.map(x=>`<li><span class="t">${esc(x.label)}<small>${importLine(x)}</small></span><div class="row"><button class="btn fit" data-imprm="${esc(x.id)}">Remove these lessons</button></div></li>`).join("")}</ul>`

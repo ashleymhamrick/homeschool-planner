@@ -240,7 +240,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .dayhead{background:var(--band);box-shadow:0 0 0 100vmax var(--band);clip-path:inset(-60px -100vmax 0 -100vmax);margin-top:-20px;padding:30px 0 26px;color:var(--bandink);
  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 4px);align-items:flex-start}
 .dayhead .eyebrow{color:var(--gold);font:italic 600 1.1rem var(--display);text-transform:none;letter-spacing:0}
-#dayTitle{display:flex;align-items:flex-end;gap:14px;margin:18px 0 0}
+#dayTitle{display:flex;align-items:flex-end;gap:14px;margin:18px 0 0;padding-bottom:16px}
 #dayTitle .dn{font-family:var(--display);font-size:5.6rem;line-height:.78;font-weight:500;color:var(--bandgold);letter-spacing:-.02em}
 #dayTitle .dw{display:grid;font:600 1.15rem/1.2 var(--sans);padding-bottom:4px}
 #dayTitle .dw small{font-weight:400;color:var(--bandmuted);font-size:.95rem}
@@ -392,6 +392,17 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
   <section class="panel" id="photoPanel">
     <div class="ui" style="display:grid;gap:10px;margin-top:10px">
       <div id="phForBox"></div>
+      <div style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">What are the photos of?</b>
+        <div class="seg" role="group" aria-label="What are the photos of"><button type="button" data-phkind="lessons" aria-pressed="true">Lesson pages</button><button type="button" data-phkind="toc" aria-pressed="false">Table of contents</button></div>
+      </div>
+      <div id="phTocOpts" hidden style="display:grid;gap:10px">
+        <p class="note" style="margin:0">Claude lists the lessons in order. The planner puts them on your school days and skips break weeks. It does not write steps, because a table of contents does not say how to teach. You can add steps later.</p>
+        <div class="row">
+          <label class="lbl">Subject<select id="phTocSec"></select></label>
+          <label class="lbl">Lessons each week<input type="number" id="phPace" min="1" max="20" value="5" inputmode="numeric"></label>
+        </div>
+        <label class="lbl">Start in<select id="phTocWeek"></select></label>
+      </div>
       <ol class="steps3">
         <li><b>1. Photos</b>Take photos of one week of lessons in your teacher's book.</li>
         <li><b>2. Claude reads</b>Claude puts each lesson in your day. It writes the steps.</li>
@@ -857,12 +868,22 @@ $("resetBtn").addEventListener("click",e=>{if(!confirmInline(e.target,"This eras
 
 /* ----- fill from photos ----- */
 let sampleNS=null,limits=null,phAbort=null,proposal=null;
-function renderPhotoWeeks(){const sel=$("phWeek"),v=sel.value||String(curW);sel.innerHTML=weekMondays().map((m,i)=>`<option value="${i+1}">Week ${i+1} (${fmt(m)})</option>`).join("");sel.value=String(Math.min(+v||curW,weekMondays().length))}
+function renderPhotoWeeks(){for(const id of ["phWeek","phTocWeek"]){const sel=$(id),v=sel.value||String(curW);sel.innerHTML=weekMondays().map((m,i)=>`<option value="${i+1}">Week ${i+1} (${fmt(m)})</option>`).join("");sel.value=String(Math.min(+v||curW,weekMondays().length))}}
+let phKind="lessons";
+function setPhKind(k){phKind=k;document.querySelectorAll("[data-phkind]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.phkind===k)));$("phTocOpts").hidden=k!=="toc";
+  document.querySelectorAll("#photoPanel .steps3, #photoPanel .more").forEach(el=>el.hidden=k==="toc")}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-phkind]");if(b)setPhKind(b.dataset.phkind)});
+/* Spread lessons from a table of contents across school weeks: N a week, evenly over the school days, in book order. */
+function scheduleLessons(titles,secId,pace,startW){const days=DAYS.map(d=>d[0]).filter(d=>S.setup.days.includes(d)),D=days.length||1,n=weekMondays().length;
+  const items=[];titles.forEach((t,i)=>{const wkOff=Math.floor(i/pace),slot=i%pace,day=days[Math.min(D-1,Math.floor((slot+.5)*D/pace))];
+    items.push({week:wkOff+1,day,section:secId,title:t,notes:"",on:startW+wkOff<=n})});return items}
 $("phFiles").addEventListener("change",()=>{const n=$("phFiles").files.length;$("phCount").textContent=n?n+" photo"+(n===1?"":"s")+" ready.":"";$("phGo").hidden=!n;$("phGo").classList.toggle("primary",!!n)});
 let phKid="all";
 function renderPhFor(){$("phForBox").innerHTML=multi()?`<div style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">Who is this book for?</b><div class="kids" style="margin:0">${[...S.kids.map(k=>[k.id,k.name,k.color]),["all","Everyone",""]].map(([v,l,c])=>`<button type="button" data-phfor="${esc(v)}" aria-pressed="${v===phKid}">${c?`<span class="kdot" style="background:${esc(c)}"></span>`:""}${esc(l)}</button>`).join("")}</div><p class="note" style="margin:0">Pick Everyone for books you teach together, like Morning Time or read aloud.</p></div>`:""}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-phfor]");if(b){phKid=b.dataset.phfor;renderPhFor()}});
-function openPhotos(){$("phWeek").value=String(curW);phKid=multi()?(curKid!=="all"?curKid:S.kids[0].id):"all";renderPhFor();
+function openPhotos(){$("phWeek").value=String(curW);$("phTocWeek").value=String(curW);setPhKind("lessons");
+  const secs=S.sections.filter(x=>!x.shared).concat(S.sections.filter(x=>x.shared));$("phTocSec").innerHTML=secs.map(x=>`<option value="${esc(x.id)}" ${x.id==="math"?"selected":""}>${esc(x.title)}</option>`).join("");
+  if(!$("phPace").dataset.touched)$("phPace").value=String(Math.max(1,S.setup.days.length));phKid=multi()?(curKid!=="all"?curKid:S.kids[0].id):"all";renderPhFor();
   const ok=Store.mode==="cloud";limits=ok?{images:{maxCount:5,maxInputBytes:30e6,mediaTypes:["image/jpeg","image/png","image/webp","image/gif"]}}:false;
   $("photoForm").hidden=!ok;const u=$("photoUnavailable");u.hidden=ok;
   if(!ok)u.textContent="Photos need an account. You can still add lessons by hand with the + Add links."}
@@ -874,13 +895,14 @@ async function shrink(file){
     c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
     const data=c.toDataURL("image/jpeg",0.85).split(",")[1];return {media_type:"image/jpeg",data}}
   finally{URL.revokeObjectURL(url)}}
-async function readPhotos(files,mode,note,carry,signal){
+$("phPace").addEventListener("input",()=>{$("phPace").dataset.touched="1"});
+async function readPhotos(files,mode,note,carry,signal,last){
   const images=[];for(const f of files)images.push(await shrink(f));
   const {data:sess}=await Store.sb.auth.getSession();const token=sess&&sess.session&&sess.session.access_token;
   if(!token)throw {code:"signed_out"};
   const cfg=window.PLANNER_CONFIG||{};
   let r;try{r=await fetch(cfg.supabaseUrl.replace(/\/$/,"")+"/functions/v1/read-photos",{method:"POST",signal,headers:{"Content-Type":"application/json",apikey:cfg.supabaseAnonKey,Authorization:"Bearer "+token},
-    body:JSON.stringify({images,mode,note,carry,days:S.setup.days,sections:S.sections.map(x=>({id:x.id,title:x.title,hint:x.hint||""}))})})}
+    body:JSON.stringify({images,mode,note,carry,last:last||"",days:S.setup.days,sections:S.sections.map(x=>({id:x.id,title:x.title,hint:x.hint||""}))})})}
   catch(e){if(signal&&signal.aborted)throw {code:"cancelled"};throw {code:"upstream",message:"The site could not reach Claude. Check your connection and try again."}}
   const out=await r.json().catch(()=>({}));
   if(!r.ok)throw {code:out.code||"upstream",message:out.error||"Claude could not read these photos. Try again."};
@@ -890,20 +912,26 @@ $("phGo").addEventListener("click",async()=>{
   const files=[...$("phFiles").files];if(!files.length){toast("Choose at least one photo");return}
   if(!limits||!limits.images)return;
   const max=Math.max(1,limits.images.maxCount),tooBig=files.filter(f=>f.size>limits.images.maxInputBytes),ok=files.filter(f=>f.size<=limits.images.maxInputBytes);
-  const mode=$("phMode").value,note=$("phNote").value.trim(),startW=+$("phWeek").value||curW;
+  const toc=phKind==="toc",mode=toc?"toc":$("phMode").value,note=$("phNote").value.trim(),startW=toc?(+$("phTocWeek").value||curW):(+$("phWeek").value||curW);
+  const pace=Math.max(1,Math.min(20,parseInt($("phPace").value,10)||5)),tocSec=$("phTocSec").value;let lessons=[],book="";
   const batches=[];for(let i=0;i<ok.length;i+=max)batches.push(ok.slice(i,i+max));
   phAbort=new AbortController();$("phGo").disabled=true;$("phStop").hidden=false;
   const all={items:[],goals:[],warnings:tooBig.map(f=>`${f.name} is too large to send. Try a smaller photo.`)};let lastWeek=0;
   try{
     for(let b=0;b<batches.length;b++){
       $("phMsg").textContent=`Reading photos ${b*max+1}–${b*max+batches[b].length} of ${ok.length}…`;
-      const res=await readPhotos(batches[b],mode,note,lastWeek,phAbort.signal);
+      const res=await readPhotos(batches[b],mode,note,toc?lessons.length:lastWeek,phAbort.signal,toc?(lessons[lessons.length-1]||""):"");
+      if(toc){(Array.isArray(res&&res.lessons)?res.lessons:[]).forEach(x=>{const t=String(x&&x.title||"").trim();if(t&&(!lessons.length||lessons[lessons.length-1].toLowerCase()!==t.toLowerCase()))lessons.push(t)});
+        if(res&&res.book&&!book)book=res.book;(Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));continue}
       const items=Array.isArray(res&&res.items)?res.items:[];
       items.forEach(x=>{const w=mode==="one"?1:Math.max(1,parseInt(x.week,10)||1);lastWeek=Math.max(lastWeek,w);all.items.push({...x,week:w})});
       (Array.isArray(res&&res.goals)?res.goals:[]).forEach(g=>all.goals.push({week:mode==="one"?1:Math.max(1,parseInt(g.week,10)||1),text:String(g.text||g||"")}));
       (Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));
     }
-    $("phMsg").textContent=all.items.length?`Claude found ${plural(all.items.length,"item")}. Check ${all.items.length===1?"it":"them"} below.`:"Claude did not find lessons in these photos.";
+    if(toc){all.items=scheduleLessons(lessons,tocSec,pace,startW);const weeks=Math.ceil(lessons.length/pace),n=weekMondays().length,endW=startW+weeks-1,over=all.items.filter(x=>!x.on).length;
+      if(over)all.warnings.push(`${plural(over,"lesson")} do not fit before your last school week (Week ${n}). They are not checked. Add more school weeks in Settings, or choose more lessons each week.`);
+      $("phMsg").textContent=lessons.length?`Claude found ${plural(lessons.length,"lesson")}${book?" in "+book:""}. At ${pace} a week, they fill ${plural(weeks,"week")} (Week ${startW} to Week ${Math.min(endW,n)}).`:"Claude did not find lessons in these photos.";}
+    else $("phMsg").textContent=all.items.length?`Claude found ${plural(all.items.length,"item")}. Check ${all.items.length===1?"it":"them"} below.`:"Claude did not find lessons in these photos.";
   }catch(e){
     const code=e&&e.code;
     const msg={limit:e&&e.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can still add lessons by hand with the + Add links.",upstream:e&&e.message,cancelled:"Stopped.",not_granted:"This page isn't allowed to use Claude. Allow it when asked, then try again.",sampling_disabled:"Claude isn't available for this account.",images_unavailable:"This view can't send photos to Claude.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",rate_limited:"You've reached a usage limit for now. Try again later.",session_expired:"Please sign in to Claude again, then retry.",refused:"Claude couldn't help with those pages. Try different photos.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once.",empty_completion:"Claude didn't return anything. Try fewer or clearer photos.",prompt_too_large:"That's too much at once. Try fewer photos or a shorter note."}[code]||"Something went wrong reading the photos. Try again.";

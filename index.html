@@ -230,6 +230,20 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
   <p class="note" style="text-align:center">New here? This planner is by invitation right now. No invitation yet? Ask the person who told you about this planner.</p>
   <p class="foot"><a href="privacy.html">Privacy</a></p>
 </div>
+<div class="authwrap" id="passGate" hidden>
+  <div class="hero"><h1>Welcome! Make your password</h1>
+    <p>You sign in with your email and this password. You only do this one time.</p></div>
+  <section class="panel">
+    <form id="gateForm" class="authform">
+      <label class="lbl">Email<input type="email" id="gateUser" autocomplete="username" readonly></label>
+      <label class="lbl">Password<input type="password" id="gatePass" autocomplete="new-password" placeholder="At least 8 characters"></label>
+      <label class="lbl">Type it again<input type="password" id="gatePass2" autocomplete="new-password"></label>
+      <button class="btn primary" type="submit" id="gateSave">Save and continue</button>
+      <p class="note" id="gateMsg" role="status" style="margin:0"></p>
+    </form>
+  </section>
+  <p class="note" style="text-align:center">Not you? <button class="linkbtn" id="gateOut" type="button">Sign out</button></p>
+</div>
 <div class="acct" id="acctBar" hidden style="display:none!important"><span id="acctWho"></span><button class="btn small" id="signOutBtn">Sign out</button></div>
 
 <div class="wrap" id="appView" hidden>
@@ -244,7 +258,6 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
   <div class="status" id="saveState" role="status"></div>
 
   <div id="wizard" hidden></div>
-  <div id="passNudge"></div>
   <div id="welcome"></div>
   <div class="weeks" id="weeks" role="group" aria-label="Weeks" hidden></div>
   <div class="daytabs" id="tabs" role="group" aria-label="Days"></div>
@@ -490,7 +503,7 @@ function render(){
   $("dayTitle").textContent=dt?(onToday?"Today, ":"")+dt.toLocaleDateString(undefined,{weekday:onToday?undefined:"long",month:"long",day:"numeric"}):"";
   $("subtitle").innerHTML=`Week ${curW} of ${n} · <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
   const any=hasAnyPlan(),wizOn=!S.setup.done&&!any;
-  $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;renderPassNudge();
+  $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;
   for(const id of ["tabs","day","saveState","quick","noteBox"])$(id).hidden=wizOn;if(wizOn)$("weeks").hidden=true;
   if(wizOn)renderWizard();
   const exHere=Object.values(S.weeks).some(W=>JSON.stringify(W).includes('"ex":true'));
@@ -811,10 +824,10 @@ $("invSend").addEventListener("click",async()=>{const email=$("invEmail").value.
   try{await callInvite({action:"invite",email,redirectTo:location.origin+location.pathname});$("invMsg").textContent="Invitation sent to "+email+".";$("invEmail").value="";loadInvites()}
   catch(e){$("invMsg").textContent=e.message}finally{$("invSend").disabled=false}});
 $("invEmail").addEventListener("keydown",e=>{if(e.key==="Enter")$("invSend").click()});
-function showApp(){$("authView").hidden=true;$("appView").hidden=false;$("acctBar").hidden=false;
+function showApp(){if(Store.mode==="cloud"&&(needGate||!hasPass())){showGate();return}$("passGate").hidden=true;$("authView").hidden=true;$("appView").hidden=false;$("acctBar").hidden=false;
   $("acctWho").textContent=Store.mode==="cloud"?"Signed in as "+(Store.user.email||"you"):"Trying it out. This browser keeps your planner.";
   $("signOutBtn").textContent=Store.mode==="cloud"?"Sign out":"Exit";$("acctSection").hidden=Store.mode!=="cloud";limits=null;startOnce();checkAdmin()}
-function showAuth(msg){$("appView").hidden=true;$("acctBar").hidden=true;$("authView").hidden=false;$("authMsg").textContent=msg||""}
+function showAuth(msg){$("passGate").hidden=true;$("appView").hidden=true;$("acctBar").hidden=true;$("authView").hidden=false;$("authMsg").textContent=msg||""}
 $("signOutBtn").addEventListener("click",async()=>{if(Store.mode==="cloud"){if(Store.dirty)await Store.flush();await Store.sb.auth.signOut()}Store.mode=null;S=blank();started=false;showAuth("")});
 function authNotReady(){if(!Store.sb){$("authMsg").textContent="Sign-in is not set up on this site yet.";return true}return false}
 $("authForm").addEventListener("submit",async e=>{e.preventDefault();const email=$("authEmail").value.trim(),password=$("authPass").value;if(!email||authNotReady())return;
@@ -827,27 +840,33 @@ $("authLink").addEventListener("click",async()=>{const email=$("authEmail").valu
   if(!email){$("authMsg").textContent="Type your email first. Then select the link again.";$("authEmail").focus();return}
   $("authMsg").textContent="Sending…";
   const {error}=await Store.sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:false}});
-  $("authMsg").textContent=!error?"Look in your email for a sign-in link. After you sign in, make a password in Menu → Settings → Your account.":/rate|too many|seconds/i.test(error.message)?"Too many emails were sent just now. Wait a few minutes and try again.":(/signup|not allowed|not found|otp_disabled/i.test(error.message+" "+(error.code||""))?"That email does not have an invitation. Ask the person who told you about this planner.":"The link did not send: "+error.message)});
+  $("authMsg").textContent=!error?"Look in your email for a sign-in link. The link opens a page where you make a new password.":/rate|too many|seconds/i.test(error.message)?"Too many emails were sent just now. Wait a few minutes and try again.":(/signup|not allowed|not found|otp_disabled/i.test(error.message+" "+(error.code||""))?"That email does not have an invitation. Ask the person who told you about this planner.":"The link did not send: "+error.message)});
 const hasPass=()=>!!(Store.user&&Store.user.user_metadata&&Store.user.user_metadata.has_password);
-function renderPassNudge(){const box=$("passNudge");let off=false;try{off=localStorage.getItem("pass-nudge-off-"+(Store.user&&Store.user.id))==="1"}catch(_){}
-  if(Store.mode!=="cloud"||hasPass()||off||!$("wizard").hidden){box.innerHTML="";return}
-  box.innerHTML=`<div class="nudge"><span>Make a password, so next time you can sign in without an email.</span><button class="btn primary small" data-open="password">Make a password</button><button class="btn small" id="passLater">Later</button></div>`}
-document.addEventListener("click",e=>{if(e.target.id==="passLater"){try{localStorage.setItem("pass-nudge-off-"+Store.user.id,"1")}catch(_){}renderPassNudge();toast("You can make a password later in Settings")}});
 function fillPassUI(){$("passNote").textContent=hasPass()?"You sign in with your email and password.":"You do not have a password yet. Make one to sign in without an email.";$("passOpenBtn").textContent=hasPass()?"Change password":"Make a password"}
 function openPassword(){$("passUser").value=(Store.user&&Store.user.email)||"";$("newPass").value="";$("newPass2").value="";$("passMsg").textContent="";
   Sheet.open(hasPass()?"Change password":"Make a password",$("passPanel"));setTimeout(()=>$("newPass").focus(),50)}
 $("passOpenBtn").addEventListener("click",()=>openPassword());
-$("passForm").addEventListener("submit",async e=>{e.preventDefault();const a=$("newPass").value,b=$("newPass2").value;
-  if(a.length<8){$("passMsg").textContent="Use at least 8 characters.";return}
-  if(a!==b){$("passMsg").textContent="The two passwords are not the same. Type them again.";return}
-  $("passMsg").textContent="Saving…";$("passSave").disabled=true;
-  const {data,error}=await Store.sb.auth.updateUser({password:a,data:{has_password:true}});$("passSave").disabled=false;
-  if(error){$("passMsg").textContent=/same|different/i.test(error.message)?"That is your current password. Type a new one.":/weak|short|length/i.test(error.message)?"That password is too easy to guess. Try a longer one.":/reauth|recent/i.test(error.message)?"For safety, sign out and sign in again with an email link. Then change your password.":"The password was not saved: "+error.message;return}
-  if(data&&data.user)Store.user=data.user;$("newPass").value="";$("newPass2").value="";Sheet.close();toast("Password saved. Next time, sign in with your email and password.")});
+async function savePassword(a,b,msg,btn){
+  if(a.length<8){msg.textContent="Use at least 8 characters.";return false}
+  if(a!==b){msg.textContent="The two passwords are not the same. Type them again.";return false}
+  msg.textContent="Saving…";btn.disabled=true;
+  const {data,error}=await Store.sb.auth.updateUser({password:a,data:{has_password:true}});btn.disabled=false;
+  if(error){msg.textContent=/same|different/i.test(error.message)?"That is your current password. Type a new one.":/weak|short|length/i.test(error.message)?"That password is too easy to guess. Try a longer one.":/reauth|recent/i.test(error.message)?"For safety, sign out and sign in again with an email link. Then change your password.":"The password was not saved: "+error.message;return false}
+  if(data&&data.user)Store.user=data.user;msg.textContent="";return true}
+$("passForm").addEventListener("submit",async e=>{e.preventDefault();
+  if(await savePassword($("newPass").value,$("newPass2").value,$("passMsg"),$("passSave"))){$("newPass").value="";$("newPass2").value="";Sheet.close();toast("Password saved")}});
+function showGate(){$("authView").hidden=true;$("appView").hidden=true;$("acctBar").hidden=true;$("passGate").hidden=false;
+  const re=hasPass();$("passGate").querySelector("h1").textContent=re?"Make a new password":"Welcome! Make your password";$("passGate").querySelector(".hero p").textContent=re?"Type a new password. Next time, sign in with your email and this password.":"You sign in with your email and this password. You only do this one time.";
+  $("gateUser").value=(Store.user&&Store.user.email)||"";$("gatePass").value="";$("gatePass2").value="";$("gateMsg").textContent="";window.scrollTo(0,0);setTimeout(()=>$("gatePass").focus(),50)}
+$("gateForm").addEventListener("submit",async e=>{e.preventDefault();
+  if(await savePassword($("gatePass").value,$("gatePass2").value,$("gateMsg"),$("gateSave"))){$("gatePass").value="";$("gatePass2").value="";needGate=false;showApp();toast("Password saved. Next time, sign in with your email and password.")}});
+$("gateOut").addEventListener("click",async()=>{needGate=false;await Store.sb.auth.signOut();Store.mode=null;S=blank();started=false;showAuth("")});
 $("deleteAcctBtn").addEventListener("click",async e=>{if(!confirmInline(e.target,"This deletes your account and planner forever. Download a backup first.","Tap to delete"))return;
   const {error}=await Store.sb.rpc("delete_my_account");if(error){toast("The account was not deleted: "+error.message);return}
   try{localStorage.removeItem(LKEY+"-"+Store.user.id)}catch(_){}await Store.sb.auth.signOut();Store.mode=null;S=blank();started=false;showAuth("Your account and planner are deleted.")});
 window.addEventListener("beforeunload",e=>{if(Store.mode==="cloud"&&(Store.dirty||Store.inflight)){Store.flush();e.preventDefault();e.returnValue=""}});
+const LINK_TYPE=((location.hash+location.search).match(/type=(\w+)/)||[])[1]||"";
+let needGate=/^(invite|magiclink|recovery|signup)$/.test(LINK_TYPE);
 (async function boot(){
   const cfg=window.PLANNER_CONFIG||{},lib=window.supabase;
   if(cfg.supabaseUrl&&cfg.supabaseAnonKey&&lib&&lib.createClient){

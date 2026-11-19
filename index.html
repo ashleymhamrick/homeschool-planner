@@ -251,7 +251,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .dayhead .eyebrow{color:var(--gold);font:500 .95rem/1.2 var(--display);text-transform:uppercase;letter-spacing:.3em;display:flex;align-items:center;gap:10px;padding-top:4px}
 .dayhead .eyebrow::after{content:"";width:18px;height:1px;background:currentColor;opacity:.7}
 #dayTitle{display:flex;align-items:flex-end;gap:14px;margin:18px 0 0;padding-bottom:16px}
-#dayTitle .dn{font-family:var(--display);font-size:5.6rem;line-height:.78;font-weight:500;color:var(--bandgold);letter-spacing:-.02em}
+#dayTitle .dn{font-variant-numeric:lining-nums;font-family:var(--display);font-size:5.6rem;line-height:.78;font-weight:500;color:var(--bandgold);letter-spacing:-.02em}
 #dayTitle .dw{display:grid;font:600 1.15rem/1.2 var(--sans);padding-bottom:4px}
 #dayTitle .dw small{font-weight:400;color:var(--bandmuted);font-size:.95rem}
 .dayhead .sub{color:var(--bandmuted);margin-top:14px}
@@ -331,6 +331,55 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .acc>summary::after{content:" +";color:var(--muted);font:400 1.2rem var(--sans)}.acc[open]>summary::after{content:" –"}
 .acc>summary{display:flex;justify-content:space-between;align-items:baseline}
 .nudge{border-radius:6px}
+.viewbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 0}
+.vtabs{display:flex;gap:4px;background:var(--core-soft);border-radius:999px;padding:3px}
+.vtabs button{border:0;background:none;color:var(--muted);font:600 .82rem var(--sans);padding:6px 12px;border-radius:999px;cursor:pointer}
+.vtabs button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(15,20,32,.12)}
+.fmtbtn{border:0;background:none;color:var(--muted);font:500 .8rem var(--sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 0}
+.fmtbtn[aria-pressed="true"]{color:var(--ink)}
+.wday{border-top:1px solid var(--line);padding:18px 0 6px}
+.wday h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 6px}
+.wday h3 button{all:unset;cursor:pointer;font:600 1.5rem var(--display);font-variant-numeric:lining-nums;color:var(--ink)}
+.wday h3 small{font:500 .8rem var(--sans);color:var(--muted)}
+.wday[data-today] h3 button{text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:6px}
+.wday .off{color:var(--muted);font:italic 500 1.05rem var(--display);margin:2px 0 6px}
+.dailyline{font:.85rem var(--sans);color:var(--muted);margin:8px 0 2px}
+.dailyline b{color:var(--ink);font-weight:600}
+.wgrid{overflow-x:auto;margin:14px -16px 0;padding:0 16px;-webkit-overflow-scrolling:touch}
+.wgrid table{border-collapse:separate;border-spacing:0;font-family:var(--sans);font-size:.82rem;min-width:100%}
+.wgrid th,.wgrid td{border-bottom:1px solid var(--line);vertical-align:top;text-align:left;padding:8px 8px}
+.wgrid thead th{font:600 .8rem var(--sans);color:var(--muted);border-bottom:1px solid var(--ink)}
+.wgrid thead th button{all:unset;cursor:pointer;display:grid;line-height:1.15}
+.wgrid thead th b{font:600 1.35rem var(--display);color:var(--ink);font-variant-numeric:lining-nums}
+.wgrid thead th[data-today] b{text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:4px}
+.wgrid tbody th{font:600 1.05rem var(--display);color:var(--ink);min-width:96px;max-width:110px;position:sticky;left:0;background:var(--paper);z-index:1}
+.wgrid td{min-width:128px}
+.wgrid td.off{color:var(--muted);font-style:italic}
+.gi{display:grid;grid-template-columns:20px 1fr;gap:6px;align-items:start;margin:0 0 8px;cursor:pointer}
+.gi:last-child{margin-bottom:0}
+.gi input{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1.25px solid color-mix(in srgb,var(--muted) 70%,transparent);border-radius:50%;margin:1px 0 0;background:transparent;cursor:pointer}
+.gi input:checked{background:var(--accent) var(--tick) center/10px no-repeat;border-color:var(--accent)}
+.gi input:checked~span{color:var(--muted);text-decoration:line-through}
+.gi input:checked~span .subj{text-decoration:none}
+.swipenote{font:.78rem var(--sans);color:var(--muted);margin:8px 0 0}
+@media (min-width:700px){.swipenote{display:none}}
+.gi .kdot{width:7px;height:7px;margin-right:4px;vertical-align:1px}
+.gi .st{display:block;color:var(--muted);font-size:.76rem;white-space:pre-wrap;text-decoration:none;margin-top:2px}
+.mnav{display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px}
+.mnav b{font:600 1.7rem var(--display)}
+.mnav button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:4px;width:38px;height:34px;font:600 1rem var(--sans);cursor:pointer}
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;font-family:var(--sans)}
+.mgrid .dh{font:600 .72rem var(--sans);color:var(--muted);text-align:center;padding:4px 0}
+.mcell{all:unset;box-sizing:border-box;min-height:62px;border-radius:4px;padding:5px 5px;display:flex;flex-direction:column;gap:3px;background:var(--card);border:1px solid var(--line);cursor:pointer}
+.mcell .d{font:600 .95rem var(--display);font-variant-numeric:lining-nums}
+.mcell small{font-size:.66rem;color:var(--muted);line-height:1.2}
+.mcell .bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden}.mcell .bar i{display:block;height:100%;background:var(--gold)}
+.mcell.out{opacity:.35;cursor:default}
+.mcell.brk{background:repeating-linear-gradient(45deg,transparent 0 5px,color-mix(in srgb,var(--line) 70%,transparent) 5px 6px);border-style:dashed}
+.mcell.free{background:none;border-color:transparent;cursor:default}
+.mcell[data-today]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.mcell:focus-visible{outline:2px solid var(--focus)}
+.mlegend{display:flex;gap:14px;flex-wrap:wrap;font:.75rem var(--sans);color:var(--muted);margin:10px 0 0}
 .toast.act{pointer-events:auto}
 .toastbtn{all:unset;cursor:pointer;margin-left:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px;color:inherit}
 .prev li.phgroup{background:none;border:0;padding:12px 0 2px;display:block}
@@ -417,6 +466,9 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
   <div id="wizard" hidden></div>
   <div id="welcome"></div>
   <div class="weeks" id="weeks" role="group" aria-label="Weeks" hidden></div>
+  <div class="viewbar" id="viewbar"><div class="vtabs" role="group" aria-label="View">
+    <button data-view="day">Day</button><button data-view="week">Week</button><button data-view="grid">Grid</button><button data-view="month">Month</button></div>
+    <button class="fmtbtn" id="fmtBtn" aria-pressed="false">Detailed</button></div>
   <div class="kids" id="kids" role="group" aria-label="Children" hidden></div>
   <div class="daytabs" id="tabs" role="group" aria-label="Days"></div>
   <div class="quick" id="quick"></div>
@@ -695,6 +747,9 @@ function hasAnyPlan(){return Object.values(S.weeks).some(W=>Object.values(W.ever
 
 /* ----- render ----- */
 let curW=1,cur="mon",editing=false,editId=null;
+let view="day",detailed=false,monthAt=null;
+try{view=localStorage.getItem("lucerna-view")||"day";detailed=localStorage.getItem("lucerna-detailed")==="1"}catch(_){}
+if(!["day","week","grid","month"].includes(view))view="day";
 function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))curKid="all";
   const n=weekMondays().length;if(curW>n)curW=Math.max(1,n);
   const ds=daysOf(curW);if(!ds.find(d=>d[0]===cur))cur=ds[0]?ds[0][0]:"mon";
@@ -702,7 +757,10 @@ function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))cu
   const ck1=S.kids.length===1?S.kids[0].name:"";const kv=multi()&&curKid!=="all"?kidById(curKid):null;
   $("title").textContent=kv?kv.name+"'s day":ck1?ck1+"'s day":(S.setup.name||"Lucerna");
   const dt=dateOf(curW,cur),onToday=sameDay(dt,new Date());
-  $("dayTitle").innerHTML=dt?`<span class="dn">${dt.getDate()}</span><span class="dw">${esc(dt.toLocaleDateString(undefined,{weekday:"long"}))}<small>${onToday?"Today, ":""}${esc(dt.toLocaleDateString(undefined,{month:"long"}))}</small></span>`:"";
+  const mons=weekMondays(),wm=mons[curW-1],wds=daysOf(curW),wl=wds.length?dateOf(curW,wds[wds.length-1][0]):null;
+  if(view==="week"||view==="grid")$("dayTitle").innerHTML=wm?`<span class="dn">${curW}</span><span class="dw">Week ${curW}<small>${esc(fmt(dateOf(curW,(wds[0]||["mon"])[0])))} to ${esc(fmt(wl))}</small></span>`:"";
+  else if(view==="month"){if(!monthAt){const b=dt||new Date();monthAt=new Date(b.getFullYear(),b.getMonth(),1)}$("dayTitle").innerHTML=`<span class="dn">${monthAt.getMonth()+1}</span><span class="dw">${esc(monthAt.toLocaleDateString(undefined,{month:"long"}))}<small>${monthAt.getFullYear()}</small></span>`}
+  else $("dayTitle").innerHTML=dt?`<span class="dn">${dt.getDate()}</span><span class="dw">${esc(dt.toLocaleDateString(undefined,{weekday:"long"}))}<small>${onToday?"Today, ":""}${esc(dt.toLocaleDateString(undefined,{month:"long"}))}</small></span>`:"";
   $("subtitle").innerHTML=`Week ${curW} of ${n} <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
   const any=hasAnyPlan(),wizOn=!S.setup.done&&!any;
   $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;
@@ -710,8 +768,11 @@ function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))cu
   if(wizOn)renderWizard();
   const exHere=Object.values(S.weeks).some(W=>JSON.stringify(W).includes('"ex":true'));
   $("welcome").innerHTML=wizOn?"":(exHere?`<div class="exbanner"><span>This is an <b>example week</b>. Select other days to see more.</span><button class="btn small" id="clearEx">Delete the example</button></div>`:"")+(any&&Store.mode==="demo"&&backupDue()?`<div class="banner"><b>Keep your planner safe.</b> Your planner is only in this browser. If you clear your browser data, you lose it. Download a backup each week.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-backup="1">Download a backup now</button></div></div>`:"")+(any?"":`<div class="banner"><b>Your week is empty.</b> To start, take photos of one week in your teacher's book.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-start="photos">Use photos</button><button class="btn fit" data-start="type">Type lessons</button><button class="btn fit" data-start="example">Show an example</button></div></div>`);
-  renderWeeks();renderKids();renderTabs();renderGoals();renderDay();renderPhotoWeeks();
+  renderWeeks();renderKids();renderTabs();renderGoals();renderMain();renderPhotoWeeks();
   renderMissed();renderQuick(any);renderNote(any);
+  $("viewbar").hidden=wizOn;document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===view)));
+  $("fmtBtn").setAttribute("aria-pressed",String(detailed));$("fmtBtn").hidden=view==="month";
+  if(!wizOn){$("tabs").hidden=view!=="day";$("noteBox").hidden=view!=="day";$("quick").hidden=view==="month"}
 }
 function renderKids(){$("kids").innerHTML=multi()?[["all","All kids",""],...S.kids.map(k=>[k.id,k.name,k.color])].map(([v,l,c])=>`<button data-kidsel="${esc(v)}" aria-pressed="${v===curKid}">${c?`<span class="kdot" style="background:${esc(c)}"></span>`:""}${esc(l)}</button>`).join(""):""}
 const goalVisible=g=>!multi()||curKid==="all"||!g.kid||g.kid===curKid;
@@ -738,7 +799,7 @@ function renderGoals(){const G=S.goals[curW]||[];const V=G.filter(goalVisible);
   $("goalList").innerHTML=G.map((g,i)=>!goalVisible(g)?"":`<li><div>${esc(g.t)}${kidTag({kid:g.kid})} <button class="addlink" data-gdel="${i}" aria-label="Remove goal">Remove</button></div><div class="gbtns">${[["met","Met"],["notyet","Not yet"],["carry","Carry over"]].map(([v,l])=>`<button type="button" data-g="${i}" data-v="${v}" aria-pressed="${g.s===v}">${l}</button>`).join("")}</div></li>`).join("")||`<li class="note" style="grid-template-columns:1fr">No goals for this week yet.</li>`;
 }
 function itemLi(it,secId,o={}){const id=ck(curW,cur,it.id);
-  return `<li><div class="item"><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span><span class="main">${o.subj?`<span class="subj">${esc(o.subj)}</span>`:""}${esc(it.t)}${it.every?`<span class="daily">daily</span>`:""}${o.tag?kidTag(it):""}</span></span></label><button class="dots" data-item="${it.id}" data-sec="${secId}" aria-label="Change ${esc(it.t)}">⋯</button>${it.n?`<details class="steps"><summary>Steps</summary><span class="n">${esc(it.n)}</span></details>`:""}</div></li>`}
+  return `<li><div class="item"><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span><span class="main">${o.subj?`<span class="subj">${esc(o.subj)}</span>`:""}${esc(it.t)}${it.every?`<span class="daily">daily</span>`:""}${o.tag?kidTag(it):""}</span></span></label><button class="dots" data-item="${it.id}" data-sec="${secId}" aria-label="Change ${esc(it.t)}">⋯</button>${it.n?`<details class="steps"${detailed?" open":""}><summary>Steps</summary><span class="n">${esc(it.n)}</span></details>`:""}</div></li>`}
 function renderDay(){
   if(S.off[curW+"-"+cur]){const o=S.off[curW+"-"+cur],m=typeof o==="object"?o.moved||0:0,canUndo=lastOff&&lastOff.key===curW+"-"+cur;
     $("day").innerHTML=`<div class="offcard"><h2>Day off</h2><p>${m?`${plural(m,"lesson")} moved to other days. `:""}Daily items are skipped today.</p><button class="btn" id="offUndo">${canUndo?"Undo the day off":"Make it a school day again"}</button></div>`;return}
@@ -767,6 +828,41 @@ function renderDay(){
   }
   $("day").innerHTML=html+(later.length&&hasAnyPlan()?`<p class="nothing">Nothing planned today for ${later.map(x=>`<button data-addsec="${x.id}">${esc(x.title)}</button>`).join(", ")}.</p>`:"");
 }
+function renderMain(){if(view==="week")renderWeekList();else if(view==="grid")renderGrid();else if(view==="month")renderMonth();else renderDay()}
+/* Everything planned on one day (not the daily items), in subject order, for the child in view. */
+function dayEntries(w,dk){const W=S.weeks[w]||{every:{},days:{}},out=[];S.sections.forEach(sec=>(((W.days||{})[dk]||{})[sec.id]||[]).filter(visible).forEach(it=>out.push({sec,it})));return out}
+function dailyEntries(w){const W=S.weeks[w]||{every:{}},out=[];S.sections.forEach(sec=>((W.every||{})[sec.id]||[]).filter(visible).forEach(it=>out.push({sec,it})));return out}
+function gi(w,dk,x,o={}){const id=ck(w,dk,x.it.id),k=multi()&&curKid==="all"&&x.it.kid&&kidById(x.it.kid);
+  const dot=k?`<span class="kdot" style="background:${esc(k.color)}"></span>`:"";
+  return `<label class="gi"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span>${o.subj?`<span class="subj">${dot}${k?esc(k.name)+", ":""}${esc(x.sec.title)}</span>`:dot}${esc(x.it.t)}${detailed&&x.it.n?`<span class="st">${esc(x.it.n)}</span>`:""}</span></label>`}
+function dailyLine(w){const d=dailyEntries(w);return d.length?`<p class="dailyline"><b>Every day:</b> ${d.map(x=>esc(x.it.t)).join(", ")}. <span>Check these in Day view.</span></p>`:""}
+function renderWeekList(){const now=new Date();
+  $("day").innerHTML=dailyLine(curW)+daysOf(curW).map(([dk,l])=>{const d=dateOf(curW,dk),E=dayEntries(curW,dk),off=S.off[curW+"-"+dk],done=E.filter(x=>S.checks[ck(curW,dk,x.it.id)]).length;
+    return `<section class="wday"${sameDay(d,now)?" data-today":""}><h3><button data-goday="${curW}|${dk}">${esc(d?d.toLocaleDateString(undefined,{weekday:"long"})+", "+fmt(d):l)}</button><small>${off?"Day off":E.length?`${done} of ${E.length} done`:""}</small></h3>
+      ${off?`<p class="off">Day off</p>`:E.length?E.map(x=>gi(curW,dk,x,{subj:true})).join(""):`<p class="nothing" style="margin:4px 0;border:0;padding:0">Nothing planned.</p>`}</section>`}).join("")}
+function renderGrid(){const now=new Date(),ds=daysOf(curW),secs=S.sections.filter(sec=>ds.some(([dk])=>dayEntries(curW,dk).some(x=>x.sec.id===sec.id)));
+  if(!secs.length){$("day").innerHTML=dailyLine(curW)+`<p class="nothing">Nothing planned this week yet.</p>`;return}
+  $("day").innerHTML=dailyLine(curW)+`<div class="wgrid"><table><thead><tr><th></th>${ds.map(([dk,l])=>{const d=dateOf(curW,dk);return `<th${sameDay(d,now)?" data-today":""}><button data-goday="${curW}|${dk}">${l}<b>${d?d.getDate():""}</b></button></th>`}).join("")}</tr></thead>
+    <tbody>${secs.map(sec=>`<tr><th>${esc(sec.title)}</th>${ds.map(([dk])=>{if(S.off[curW+"-"+dk])return `<td class="off">Day off</td>`;const E=dayEntries(curW,dk).filter(x=>x.sec.id===sec.id);return `<td>${E.map(x=>gi(curW,dk,x)).join("")}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>${ds.length>2?`<p class="swipenote">Swipe the grid sideways to see the rest of the week.</p>`:""}`}
+function renderMonth(){const m=monthAt||new Date(),y=m.getFullYear(),mo=m.getMonth(),first=new Date(y,mo,1),start=new Date(first);start.setDate(1-((first.getDay()+6)%7));
+  const mons=weekMondays().map(iso),brk=new Set((S.setup.breaks||[]).map(b=>{const d=parseISO(b);if(!d)return "";d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)})),now=new Date();let cells="";
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);if(i>=35&&d.getMonth()!==mo)break;
+    const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));const wi=mons.indexOf(iso(mon)),dk=DAYS[(d.getDay()+6)%7][0],inM=d.getMonth()===mo;
+    let cls="mcell",body="",attr="";
+    if(!inM)cls+=" out";
+    if(brk.has(iso(mon))&&S.setup.days.includes(dk)){cls+=" brk";body="<small>Break</small>"}
+    else if(wi>=0&&daysOf(wi+1).some(x=>x[0]===dk)){const w=wi+1;attr=` data-goday="${w}|${dk}"`;
+      if(S.off[w+"-"+dk])body="<small>Day off</small>";
+      else{const E=dayEntries(w,dk),done=E.filter(x=>S.checks[ck(w,dk,x.it.id)]).length;body=E.length?`<small>${E.length}</small><span class="bar"><i style="width:${Math.round(100*done/E.length)}%"></i></span>`:""}}
+    else cls+=" free";
+    cells+=`<button class="${cls}"${attr}${sameDay(d,now)?" data-today":""}${attr?"":" tabindex=\"-1\""} aria-label="${esc(d.toDateString())}"><span class="d">${d.getDate()}</span>${body}</button>`}
+  $("day").innerHTML=`<div class="mnav"><button data-mnav="-1" aria-label="Previous month">‹</button><b>${esc(m.toLocaleDateString(undefined,{month:"long",year:"numeric"}))}</b><button data-mnav="1" aria-label="Next month">›</button></div>
+    <div class="mgrid">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(x=>`<span class="dh">${x}</span>`).join("")}${cells}</div>
+    <p class="mlegend"><span>The number is how many lessons are planned. The gold line shows how much is done. Tap a school day to open it.</span></p>`}
+document.addEventListener("click",e=>{const v=e.target.closest("[data-view]");if(v){view=v.dataset.view;if(view==="month")monthAt=null;try{localStorage.setItem("lucerna-view",view)}catch(_){}render();window.scrollTo(0,0);return}
+  if(e.target.id==="fmtBtn"){detailed=!detailed;try{localStorage.setItem("lucerna-detailed",detailed?"1":"0")}catch(_){}render();return}
+  const g=e.target.closest("[data-goday]");if(g){const [w,dk]=g.dataset.goday.split("|");curW=+w;cur=dk;view="day";try{localStorage.setItem("lucerna-view","day")}catch(_){}render();window.scrollTo(0,0);return}
+  const mn=e.target.closest("[data-mnav]");if(mn){monthAt=new Date(monthAt.getFullYear(),monthAt.getMonth()+(+mn.dataset.mnav),1);render();return}});
 function renderMissed(){
   const now=new Date();now.setHours(0,0,0,0);const out=[],n=weekMondays().length;
   for(let w=1;w<=n;w++)for(const [dk,l] of daysOf(w)){const d=dateOf(w,dk);if(!d||d>=now)continue;
@@ -858,7 +954,7 @@ $("goalAddOpen").addEventListener("click",()=>{$("goalAddOpen").hidden=true;$("g
 /* ----- events ----- */
 $("weeks").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.today){const p=todayPos();curW=p.w;cur=p.d}else curW=+b.dataset.w;editId=null;render()});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(!b)return;cur=b.dataset.d;editId=null;render()});
-document.addEventListener("change",e=>{const c=e.target.closest("input[data-ck]");if(!c)return;const k=c.dataset.ck;if(c.checked)S.checks[k]=true;else delete S.checks[k];save(+k.split("-")[0]);if(c.closest("#missedList"))render();else{renderMissed();if(multi()&&curKid==="all"&&c.closest("#day")){const y=scrollY;renderDay();scrollTo(0,y)}}});
+document.addEventListener("change",e=>{const c=e.target.closest("input[data-ck]");if(!c)return;const k=c.dataset.ck;if(c.checked)S.checks[k]=true;else delete S.checks[k];save(+k.split("-")[0]);if(c.closest("#missedList"))render();else{renderMissed();if(c.closest("#day")&&(view!=="day"||(multi()&&curKid==="all"))){const y=scrollY,sx=($("day").querySelector(".wgrid")||{}).scrollLeft||0;renderMain();scrollTo(0,y);const g=$("day").querySelector(".wgrid");if(g)g.scrollLeft=sx}}});
 $("goalAddBtn").addEventListener("click",()=>{const t=$("goalInput").value.trim();if(!t)return;const gf=$("goalFor")?$("goalFor").value:"all";(S.goals[curW]=S.goals[curW]||[]).push(gf==="all"?{t}:{t,kid:gf});$("goalInput").value="";save(curW);renderGoals()});
 $("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("goalAddBtn").click()});
 $("goalList").addEventListener("click",e=>{const G=S.goals[curW]||[];const b=e.target.closest("button");if(!b)return;

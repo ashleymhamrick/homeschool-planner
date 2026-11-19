@@ -9,6 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#1f2a44">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Lucerna">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <style>
@@ -227,8 +232,10 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
 body{font:16px/1.55 var(--sans)}
 .hero h1,.wiz h2,.sheet-head h2,#passGate h1{font-family:var(--display);font-weight:600;letter-spacing:-.005em}
 .hero{background:var(--band);color:var(--bandink);box-shadow:0 0 0 100vmax var(--band);clip-path:inset(-100px -100vmax 0 -100vmax);margin-top:-40px;padding:44px 0 30px}
-.brandmark{display:grid;gap:2px;margin-bottom:26px}
-.brandmark b{font:italic 600 2rem/1 var(--display);color:var(--gold)}
+.brandmark{display:grid;gap:10px;justify-items:start;margin-bottom:28px}
+.wordmark{display:inline-flex;align-items:center;gap:12px;font:500 1.45rem/1 var(--display);letter-spacing:.32em;color:var(--gold);margin-right:-.32em}
+.wordmark i{display:block;width:18px;height:1px;background:currentColor;opacity:.75}
+.wordmark i:last-child{margin-left:-.32em}
 .brandmark small{font:italic 500 1.05rem var(--display);color:var(--bandmuted)}
 .hero h1{font-size:2.5rem;line-height:1.05}
 .hero p{color:var(--bandmuted)}
@@ -241,7 +248,8 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 .linkbtn,.nothing button{color:var(--ink);text-decoration-color:var(--gold)}
 .dayhead{background:var(--band);box-shadow:0 0 0 100vmax var(--band);clip-path:inset(-60px -100vmax 0 -100vmax);margin-top:-20px;padding:30px 0 26px;color:var(--bandink);
  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 4px);align-items:flex-start}
-.dayhead .eyebrow{color:var(--gold);font:italic 600 1.1rem var(--display);text-transform:none;letter-spacing:0}
+.dayhead .eyebrow{color:var(--gold);font:500 .95rem/1.2 var(--display);text-transform:uppercase;letter-spacing:.3em;display:flex;align-items:center;gap:10px;padding-top:4px}
+.dayhead .eyebrow::after{content:"";width:18px;height:1px;background:currentColor;opacity:.7}
 #dayTitle{display:flex;align-items:flex-end;gap:14px;margin:18px 0 0;padding-bottom:16px}
 #dayTitle .dn{font-family:var(--display);font-size:5.6rem;line-height:.78;font-weight:500;color:var(--bandgold);letter-spacing:-.02em}
 #dayTitle .dw{display:grid;font:600 1.15rem/1.2 var(--sans);padding-bottom:4px}
@@ -342,7 +350,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
 <body>
 <div class="authwrap" id="authView" hidden>
   <div class="hero">
-    <div class="brandmark"><b>Lucerna</b><small>A lamp for your school day</small></div>
+    <div class="brandmark"><span class="wordmark" role="img" aria-label="Lucerna"><i></i>LUCERNA<i></i></span><small>A lamp for your school day</small></div>
     <h1>A homeschool planner that walks you through the day</h1>
     <p>Take photos of your teacher's book. The planner puts each lesson in your day and writes the steps. You check it and add it.</p>
   </div>
@@ -366,7 +374,7 @@ input[type=text],input[type=date],input[type=number],input[type=email],input[typ
   <p class="foot"><a href="privacy.html">Privacy</a></p>
 </div>
 <div class="authwrap" id="passGate" hidden>
-  <div class="hero"><div class="brandmark"><b>Lucerna</b><small>A lamp for your school day</small></div><h1>Welcome! Make your password</h1>
+  <div class="hero"><div class="brandmark"><span class="wordmark" role="img" aria-label="Lucerna"><i></i>LUCERNA<i></i></span><small>A lamp for your school day</small></div><h1>Welcome! Make your password</h1>
     <p>You sign in with your email and this password. You only do this one time.</p></div>
   <section class="panel">
     <form id="gateForm" class="authform">

@@ -5,23 +5,33 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Homeschool Day Planner</title>
 <meta name="description" content="A homeschool planner that walks you through the day. Take photos of your teacher's book and it plans your week.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#1f2a44">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <style>
 /* Layout: one reading column; the day reads top to bottom as numbered, color-keyed sections. */
 :root{
-  --paper:#f8f6f1;--card:#ffffff;--ink:#27261f;--muted:#6b675c;--line:#e3ddd0;
-  --morn:#a85d1c;--morn-soft:#f5e8d6;--core:#2d6656;--core-soft:#dfeee8;--read:#574788;--read-soft:#e9e5f4;--extra:#85582b;--extra-soft:#f0e6d9;
-  --focus:#2d6656;--danger:#a3261c;
-  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --paper:#fbfbfa;--card:#ffffff;--ink:#1f2638;--muted:#737887;--line:#e4e4e8;
+  --accent:#1f2a44;--onaccent:#ecdcb6;--gold:#b8955a;--band:#1f2a44;--bandink:#f3efe6;--bandmuted:#b9bccb;--bandgold:#e3cf9f;
+  --morn:#8f6d33;--morn-soft:#f4eedf;--core:#1f2a44;--core-soft:#eef0f5;--read:#4b5a85;--read-soft:#eef0f6;--extra:#6b5a3e;--extra-soft:#f2eee6;
+  --focus:#1f2a44;--danger:#a3261c;--tick:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23ecdcb6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --display:"Cormorant Garamond",Georgia,serif;
+  --serif:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --sans:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#1b1a17;--card:#24231f;--ink:#ece8de;--muted:#a7a195;--line:#3a3832;
-  --morn:#e09a58;--morn-soft:#3a2c1d;--core:#71bea5;--core-soft:#1e3530;--read:#ab9ddf;--read-soft:#2c2840;--extra:#cfa06e;--extra-soft:#352a1e;--focus:#71bea5;--danger:#f08a80;color-scheme:dark}}
+  --paper:#0f1420;--card:#161c2b;--ink:#ece9e1;--muted:#9a9fae;--line:#272e40;
+  --accent:#d9c08a;--onaccent:#0f1420;--gold:#c9a96e;--band:#141b2d;--bandink:#f3efe6;--bandmuted:#a8adbd;--bandgold:#e3cf9f;
+  --morn:#d9b77a;--morn-soft:#2a2618;--core:#d9c08a;--core-soft:#1d2436;--read:#a9b4dd;--read-soft:#1d2436;--extra:#cdb58a;--extra-soft:#231f17;
+  --focus:#d9c08a;--danger:#f08a80;--tick:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%230f1420' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#1b1a17;--card:#24231f;--ink:#ece8de;--muted:#a7a195;--line:#3a3832;
-  --morn:#e09a58;--morn-soft:#3a2c1d;--core:#71bea5;--core-soft:#1e3530;--read:#ab9ddf;--read-soft:#2c2840;--extra:#cfa06e;--extra-soft:#352a1e;--focus:#71bea5;--danger:#f08a80;color-scheme:dark}
+  --paper:#0f1420;--card:#161c2b;--ink:#ece9e1;--muted:#9a9fae;--line:#272e40;
+  --accent:#d9c08a;--onaccent:#0f1420;--gold:#c9a96e;--band:#141b2d;--bandink:#f3efe6;--bandmuted:#a8adbd;--bandgold:#e3cf9f;
+  --morn:#d9b77a;--morn-soft:#2a2618;--core:#d9c08a;--core-soft:#1d2436;--read:#a9b4dd;--read-soft:#1d2436;--extra:#cdb58a;--extra-soft:#231f17;
+  --focus:#d9c08a;--danger:#f08a80;--tick:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%230f1420' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);font:16px/1.5 var(--serif);-webkit-text-size-adjust:100%}
@@ -212,6 +222,105 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
 .acc>summary::-webkit-details-marker{display:none}
 .acc>summary::after{content:" ▸";color:var(--muted)}.acc[open]>summary::after{content:" ▾"}
 .acc>div{display:grid;gap:10px;margin-top:10px}
+
+/* ===== Bound planner look: a navy cover band, gold numerals, fine serif titles, and quiet pages ===== */
+body{font:16px/1.55 var(--sans)}
+.hero h1,.wiz h2,.sheet-head h2,#passGate h1{font-family:var(--display);font-weight:600;letter-spacing:-.005em}
+.hero{background:var(--band);color:var(--bandink);box-shadow:0 0 0 100vmax var(--band);clip-path:inset(-100px -100vmax 0 -100vmax);margin-top:-40px;padding:44px 0 30px}
+.hero::before{content:"Homeschool Day Planner";display:block;font:italic 600 1.1rem var(--display);color:var(--gold);margin-bottom:22px}
+.hero h1{font-size:2.5rem;line-height:1.05}
+.hero p{color:var(--bandmuted)}
+.feat li::before{color:var(--gold)}
+.panel{border-radius:6px}
+.panel h2{font-family:var(--display);font-size:1.5rem;font-weight:600}
+input[type=text],input[type=date],input[type=number],input[type=email],input[type=password],textarea,select{border-radius:4px;background:var(--card);font-family:var(--sans)}
+.btn{border-radius:4px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.linkbtn,.nothing button{color:var(--ink);text-decoration-color:var(--gold)}
+.dayhead{background:var(--band);box-shadow:0 0 0 100vmax var(--band);clip-path:inset(-60px -100vmax 0 -100vmax);margin-top:-20px;padding:30px 0 26px;color:var(--bandink);
+ background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 4px);align-items:flex-start}
+.dayhead .eyebrow{color:var(--gold);font:italic 600 1.1rem var(--display);text-transform:none;letter-spacing:0}
+#dayTitle{display:flex;align-items:flex-end;gap:14px;margin:18px 0 0}
+#dayTitle .dn{font-family:var(--display);font-size:5.6rem;line-height:.78;font-weight:500;color:var(--bandgold);letter-spacing:-.02em}
+#dayTitle .dw{display:grid;font:600 1.15rem/1.2 var(--sans);padding-bottom:4px}
+#dayTitle .dw small{font-weight:400;color:var(--bandmuted);font-size:.95rem}
+.dayhead .sub{color:var(--bandmuted);margin-top:14px}
+.dayhead .sub button{color:var(--bandgold);margin-left:10px}
+.menubtn{border:0;background:none;padding:6px 0;color:var(--bandgold);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.status{margin-top:10px}
+.weeks button{border-radius:4px}
+.weeks button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.weeks .todaybtn{background:none;color:var(--ink);border-color:var(--gold)}
+.weeks button[data-now]{box-shadow:inset 0 -2px 0 var(--gold)}
+.kids{gap:18px;margin-top:22px;border-bottom:1px solid var(--line)}
+.kids button{flex:none;min-width:0;border:0;border-radius:0;background:none;padding:0 0 10px;font-weight:500;color:var(--muted)}
+.kids button[aria-pressed="true"]{background:none;color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.daytabs{gap:0;margin:16px 0 4px}
+.daytabs button{border:0;background:none;border-radius:0;color:var(--muted);font-weight:500;padding:4px 0}
+.daytabs button b{display:grid;place-items:center;width:38px;height:38px;margin:4px auto 0;border-radius:50%;font-weight:500;font-size:1.05rem}
+.daytabs button[aria-pressed="true"]{background:none;color:var(--ink)}
+.daytabs button[aria-pressed="true"] b{background:var(--accent);color:var(--onaccent)}
+.daytabs button[data-today]:not([aria-pressed="true"]){color:var(--ink)}
+.daytabs button[data-today]:not([aria-pressed="true"]) b{box-shadow:inset 0 0 0 1px var(--gold)}
+.quick{margin:8px 0 6px;gap:16px}
+.chip2{border:0;background:none;padding:4px 0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);border-radius:0}
+.chip2.warn{color:var(--morn);text-decoration-color:var(--morn)}
+.chip2[aria-pressed="true"]{background:none;color:var(--morn);text-decoration-color:var(--morn)}
+.block{border:0;border-radius:0;background:none;margin:0;padding:24px 0 6px;border-top:1px solid var(--line);overflow:visible}
+.block header{background:none;padding:0 0 4px}
+.block header h2{font-family:var(--display);font-weight:600;font-size:1.85rem;color:var(--ink);gap:10px;align-items:baseline}
+.stepn{background:none;color:var(--muted);font:500 .8rem var(--sans);width:auto;height:auto;border-radius:0}
+.block.kid h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--kc);align-self:center;order:-1;margin-right:2px}
+.block.kid .stepn{order:-2}
+.who,.daily,.subj{text-transform:none;letter-spacing:0;border:0;background:none;padding:0}
+.who{color:var(--muted);font:500 .8rem var(--sans)}
+.daily{color:var(--muted);font:400 .75rem var(--sans);margin-left:8px;vertical-align:1px}
+.subj{font:500 .78rem var(--sans);color:var(--muted);margin-bottom:2px}
+.kidtag{font-weight:500}
+.inner{padding:0}
+.items li{border-top:0;padding:10px 0}
+.task{grid-template-columns:30px 1fr}
+.task .main{font-weight:500;font-size:1.02rem}
+.task input{appearance:none;-webkit-appearance:none;width:22px;height:22px;border:1.25px solid color-mix(in srgb,var(--muted) 70%,transparent);border-radius:50%;margin:1px 0 0;background:transparent;cursor:pointer}
+.task input:checked{background:var(--accent) var(--tick) center/13px no-repeat;border-color:var(--accent)}
+.task input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.task input:checked~span .main{color:var(--muted);text-decoration-thickness:1px}
+.steps{margin-left:40px}.steps summary{color:var(--muted);font-weight:500}.steps summary::before{content:""}
+.steps summary::after{content:" +"}.steps[open] summary::after{content:" –"}
+.addlink{color:var(--muted)}.addlink:hover,.addlink:focus-visible{color:var(--ink)}
+.nothing{border-top:1px solid var(--line);padding-top:18px}
+.exbanner,.banner{background:none;border:1px solid var(--line);border-radius:6px}
+.banner b{color:var(--ink)}
+.notebtn{border:0;border-top:1px solid var(--line);border-radius:0;padding:18px 0;margin-top:10px}
+.notecard{border-radius:6px;background:none}
+.notecard b{font:600 1.35rem var(--display)}
+.wiz{border-radius:6px;padding:26px 22px}
+.wiz h2{font-size:2rem;line-height:1.1}
+.wiz .stepcount{text-transform:none;letter-spacing:0;font:italic 600 1.05rem var(--display);color:var(--gold)}
+.chip{border-radius:4px;background:var(--card)}
+.chip input{accent-color:var(--accent)}
+.choice{border-radius:6px;background:var(--card)}
+.choice.main{border-color:var(--accent);background:var(--core-soft)}
+.choice b{font:600 1.35rem var(--display)}
+.steps3 li{border-radius:4px;background:var(--card)}
+.steps3 li b{text-transform:none;letter-spacing:0;font:600 1.2rem var(--display);color:var(--ink)}
+.sheet{border-radius:14px 14px 0 0}
+.sheet-head h2{font-size:1.7rem}
+.menu{gap:0}
+.menu button{border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:14px 2px}
+.menu li:last-child button{border-bottom:0}
+.seg{border-radius:4px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--onaccent)}
+.gbtns button{border-radius:4px;background:var(--card)}
+.gbtns button[aria-pressed="true"][data-v="met"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.gbtns button[aria-pressed="true"][data-v="notyet"],.gbtns button[aria-pressed="true"][data-v="carry"]{background:none;border-color:var(--morn);color:var(--morn)}
+.prev li{border-radius:4px;background:var(--card)}
+.acc>summary{font:600 1.3rem var(--display)}
+.toast{background:var(--band);color:var(--bandgold);border-radius:4px}
+.hero h1,.wiz h2,.sheet-head h2,#passGate h1,.block header h2,.steps3 li b,.choice b,.acc>summary,.panel h2,.notecard b{font-variant-numeric:lining-nums}
+.acc>summary::after{content:" +";color:var(--muted);font:400 1.2rem var(--sans)}.acc[open]>summary::after{content:" –"}
+.acc>summary{display:flex;justify-content:space-between;align-items:baseline}
+.nudge{border-radius:6px}
 </style>
 </head>
 <body>
@@ -419,7 +528,7 @@ const plural=(n,w)=>n+" "+w+(n===1?"":"s");
 const LKEY="hs-day-planner-local-v1";
 
 const SHARED_DEFAULT={morning:1,science:1,extra:1,readaloud:1,close:1};
-const KID_COLORS=["#c2652a","#5b6fb5","#3f8a6a","#a0527a","#8a6d2b","#2f7a8a","#b0443f","#6b5aa8"];
+const KID_COLORS=["#b0683a","#4f6aa8","#4f8a6b","#9a5578","#a08436","#3f7f8c","#a84a45","#6d5fa6"];
 const DEFAULT_SECTIONS=[
  {id:"morning",title:"Morning Time",tag:"Together, first thing",color:"morning",optional:false,
   hint:"Do these together each day: a prayer, the calendar, a Bible story, a song, memory work, and a poem. Add each item for “Every day this week”.",
@@ -534,8 +643,8 @@ function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))cu
   const ck1=S.kids.length===1?S.kids[0].name:"";const kv=multi()&&curKid!=="all"?kidById(curKid):null;
   $("title").textContent=kv?kv.name+"'s day":(ck1?ck1+"'s ":"")+(S.setup.name||"Homeschool Day Planner");
   const dt=dateOf(curW,cur),onToday=sameDay(dt,new Date());
-  $("dayTitle").textContent=dt?(onToday?"Today, ":"")+dt.toLocaleDateString(undefined,{weekday:onToday?undefined:"long",month:"long",day:"numeric"}):"";
-  $("subtitle").innerHTML=`Week ${curW} of ${n} · <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
+  $("dayTitle").innerHTML=dt?`<span class="dn">${dt.getDate()}</span><span class="dw">${esc(dt.toLocaleDateString(undefined,{weekday:"long"}))}<small>${onToday?"Today, ":""}${esc(dt.toLocaleDateString(undefined,{month:"long"}))}</small></span>`:"";
+  $("subtitle").innerHTML=`Week ${curW} of ${n} <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
   const any=hasAnyPlan(),wizOn=!S.setup.done&&!any;
   $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;
   for(const id of ["tabs","day","saveState","quick","noteBox"])$(id).hidden=wizOn;$("kids").hidden=wizOn||!multi();if(wizOn)$("weeks").hidden=true;
@@ -551,7 +660,7 @@ function renderQuick(any){
   if(!any){$("quick").innerHTML="";return}
   const G=(S.goals[curW]||[]).filter(goalVisible),met=G.filter(g=>g.s==="met").length,sh=!!S.short[curW+"-"+cur];
   const hasOptional=S.sections.some(x=>x.optional&&itemsFor(curW,cur,x.id).length);
-  $("quick").innerHTML=`<button class="chip2" data-open="goals">${G.length?`Goals · ${met} of ${G.length} met`:"Week goals"}</button>`
+  $("quick").innerHTML=`<button class="chip2" data-open="goals">${G.length?`Week goals: ${met} of ${G.length} met`:"Week goals"}</button>`
     +(missedN?`<button class="chip2 warn" data-open="missed">${missedN} to catch up</button>`:"")
     +(hasOptional||sh?`<button class="chip2" id="shortChip" aria-pressed="${sh}">${sh?"Short day: on":"Short day"}</button>`:"");
 }
@@ -601,9 +710,9 @@ function renderMissed(){
   const now=new Date();now.setHours(0,0,0,0);const out=[],n=weekMondays().length;
   for(let w=1;w<=n;w++)for(const [dk,l] of daysOf(w)){const d=dateOf(w,dk);if(!d||d>=now)continue;
     if(S.setup.since&&iso(d)<S.setup.since)continue;
-    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).filter(visible).forEach(it=>{const id=ck(w,dk,it.id);const k=multi()&&it.kid&&kidById(it.kid);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:(k?k.name+" · ":"")+sec.title,t:it.t})})})}
+    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).filter(visible).forEach(it=>{const id=ck(w,dk,it.id);const k=multi()&&it.kid&&kidById(it.kid);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:(k?k.name+", ":"")+sec.title,t:it.t})})})}
   missedN=out.length;$("missedCount").textContent=out.length?out.length+" to catch up":"all caught up";
-  $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)} · ${esc(x.sec)}</span></span></label></li>`).join("")||`<li class="note">Nothing missed.</li>`;
+  $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)}, ${esc(x.sec)}</span></span></label></li>`).join("")||`<li class="note">Nothing missed.</li>`;
 }
 
 var missedN=0;

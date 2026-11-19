@@ -198,6 +198,15 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;font:inherit;cursor:pointer}
 .nudge{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:.9rem;font-family:var(--sans)}
 .nudge span{flex:1 1 200px}
+.kids{display:flex;gap:6px;margin:12px 0 0;overflow-x:auto;scrollbar-width:none}
+.kids button{flex:1 0 auto;min-width:80px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 12px;font:600 .9rem var(--sans);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.kids button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.kdot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.who{font:600 .65rem var(--sans);letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:1px 8px;margin-left:auto;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.kidtag{display:inline-flex;align-items:center;gap:4px;font:600 .7rem var(--sans);color:var(--muted);margin-left:6px;vertical-align:1px}
+.subj{display:block;font:600 .68rem var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.block.kid{--c:var(--kc);--soft:color-mix(in srgb,var(--kc) 13%,var(--card))}
+.kidrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
 .acc{border-top:1px solid var(--line);padding:10px 0}
 .acc>summary{cursor:pointer;font:600 1rem var(--sans);list-style:none}
 .acc>summary::-webkit-details-marker{display:none}
@@ -260,6 +269,7 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
   <div id="wizard" hidden></div>
   <div id="welcome"></div>
   <div class="weeks" id="weeks" role="group" aria-label="Weeks" hidden></div>
+  <div class="kids" id="kids" role="group" aria-label="Children" hidden></div>
   <div class="daytabs" id="tabs" role="group" aria-label="Days"></div>
   <div class="quick" id="quick"></div>
 
@@ -272,6 +282,7 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
 <div id="sheetStore" hidden>
   <section class="panel" id="photoPanel">
     <div class="ui" style="display:grid;gap:10px;margin-top:10px">
+      <div id="phForBox"></div>
       <ol class="steps3">
         <li><b>1. Photos</b>Take photos of one week of lessons in your teacher's book.</li>
         <li><b>2. Claude reads</b>Claude puts each lesson in your day. It writes the steps.</li>
@@ -315,7 +326,7 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
     <ul class="glist" id="goalList"></ul>
     <button class="addlink" id="goalAddOpen">+ Add a goal</button>
     <div class="row" id="goalAddRow" hidden>
-      <input type="text" id="goalInput" placeholder="Example: Read words with the long a sound" aria-label="New goal">
+      <span id="goalForBox" style="display:contents"></span><input type="text" id="goalInput" placeholder="Example: Read words with the long a sound" aria-label="New goal">
       <button class="btn primary fit" id="goalAddBtn">Add</button>
     </div>
     <details class="more" style="margin-top:8px"><summary>How another family uses this</summary><p class="note" style="margin:6px 0 0">They write one goal for each subject. Each goal starts with “By Friday, my child can”. They read the goals on Monday. They mark the goals on Friday.</p></details>
@@ -351,7 +362,6 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
     <div class="ui">
       <details class="acc"><summary>School dates and days</summary><div>
       <label class="lbl">Planner name<input type="text" id="sName"></label>
-      <label class="lbl">Child's first name or nickname (optional)<input type="text" id="sChild"></label>
       <div class="row">
         <label class="lbl">First day of school<input type="date" id="sStart"></label>
         <label class="lbl">Number of school weeks<input type="number" id="sWeeks" min="1" max="60"></label>
@@ -363,6 +373,12 @@ input[type=email],input[type=password]{font-size:.95rem;border:1px solid var(--l
         <div class="row" id="sDays"></div>
       </fieldset>
       <button class="btn primary fit" id="saveSetup" style="justify-self:start">Save</button>
+      </div></details>
+      <details class="acc"><summary>Children</summary><div>
+      <p class="note" style="margin:0">A first name or nickname is enough. With two or more children, each child gets their own lessons and goals.</p>
+      <div id="kidList" style="display:grid;gap:8px"></div>
+      <button class="btn fit" id="kidAdd" style="justify-self:start">Add a child</button>
+      <button class="btn primary fit" id="saveKids" style="justify-self:start">Save</button>
       </div></details>
       <details class="acc"><summary>Subjects</summary><div>
       <p class="note" style="margin:0">Change the names and order to match your books. Optional subjects hide on a short day.</p>
@@ -402,6 +418,8 @@ const OFF={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
 const plural=(n,w)=>n+" "+w+(n===1?"":"s");
 const LKEY="hs-day-planner-local-v1";
 
+const SHARED_DEFAULT={morning:1,science:1,extra:1,readaloud:1,close:1};
+const KID_COLORS=["#c2652a","#5b6fb5","#3f8a6a","#a0527a","#8a6d2b","#2f7a8a","#b0443f","#6b5aa8"];
 const DEFAULT_SECTIONS=[
  {id:"morning",title:"Morning Time",tag:"Together, first thing",color:"morning",optional:false,
   hint:"Do these together each day: a prayer, the calendar, a Bible story, a song, memory work, and a poem. Add each item for “Every day this week”.",
@@ -432,7 +450,22 @@ function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"
 function parseISO(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());return m?new Date(+m[1],+m[2]-1,+m[3]):null}
 function blank(){const d=new Date();const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));
   return {setup:{name:"Homeschool Day Planner",child:"",start:iso(mon),weeks:36,breaks:[],days:["mon","tue","wed","thu","fri"]},
-    sections:JSON.parse(JSON.stringify(DEFAULT_SECTIONS)),weeks:{},checks:{},notes:{},short:{},goals:{}}}
+    sections:JSON.parse(JSON.stringify(DEFAULT_SECTIONS)).map(x=>({...x,shared:!!SHARED_DEFAULT[x.id]})),kids:[],weeks:{},checks:{},notes:{},short:{},goals:{}}}
+/* ----- children ----- */
+function normalize(){if(!Array.isArray(S.kids))S.kids=[];if(!S.kids.length&&S.setup&&S.setup.child)S.kids=[{id:"k"+uid(),name:S.setup.child,color:KID_COLORS[0]}];
+  S.sections.forEach(x=>{if(x.shared===undefined)x.shared=!!SHARED_DEFAULT[x.id]})}
+const multi=()=>S.kids.length>1;
+const kidById=id=>S.kids.find(k=>k.id===id);
+let curKid="all";
+function visible(it){return !multi()||curKid==="all"||!it.kid||it.kid===curKid}
+function kidTag(it){const k=multi()&&it.kid&&kidById(it.kid);return k?`<span class="kidtag"><span class="kdot" style="background:${esc(k.color)}"></span>${esc(k.name)}</span>`:""}
+function forSeg(sel){return multi()?`<div class="seg" role="group" aria-label="Who is this for">${[["all","Everyone"],...S.kids.map(k=>[k.id,k.name])].map(([v,l])=>`<button type="button" data-for="${esc(v)}" aria-pressed="${v===sel}">${esc(l)}</button>`).join("")}</div>`:""}
+const segVal=()=>{const b=$("sheetBody").querySelector('[data-for][aria-pressed="true"]');return b?b.dataset.for:"all"};
+function nextKidColor(){const used=new Set(S.kids.map(k=>k.color));return KID_COLORS.find(c=>!used.has(c))||KID_COLORS[S.kids.length%KID_COLORS.length]}
+/* When a family goes from one child to two, lessons in non-shared subjects belong to the first child. */
+function adoptForFirstKid(){const k=S.kids[0];if(!k)return;const sh=new Set(S.sections.filter(x=>x.shared).map(x=>x.id));
+  for(const w in S.weeks){const W=S.weeks[w];const own=(sec,L)=>{if(!sh.has(sec))L.forEach(it=>{if(!it.kid)it.kid=k.id})};
+    for(const sec in W.every)own(sec,W.every[sec]);for(const dk in W.days)for(const sec in W.days[dk])own(sec,W.days[dk][sec])}}
 let S=blank();
 
 /* ----- storage: one private row per family in the database (row-level security), or this browser in try-it mode ----- */
@@ -494,26 +527,29 @@ function hasAnyPlan(){return Object.values(S.weeks).some(W=>Object.values(W.ever
 
 /* ----- render ----- */
 let curW=1,cur="mon",editing=false,editId=null;
-function render(){
+function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))curKid="all";
   const n=weekMondays().length;if(curW>n)curW=Math.max(1,n);
   const ds=daysOf(curW);if(!ds.find(d=>d[0]===cur))cur=ds[0]?ds[0][0]:"mon";
-  try{localStorage.setItem(LKEY+"-pos",JSON.stringify({w:curW,d:cur}))}catch(e){}
-  $("title").textContent=(S.setup.child?S.setup.child+"'s ":"")+(S.setup.name||"Homeschool Day Planner");
+  try{localStorage.setItem(LKEY+"-pos",JSON.stringify({w:curW,d:cur,k:curKid}))}catch(e){}
+  const ck1=S.kids.length===1?S.kids[0].name:"";const kv=multi()&&curKid!=="all"?kidById(curKid):null;
+  $("title").textContent=kv?kv.name+"'s day":(ck1?ck1+"'s ":"")+(S.setup.name||"Homeschool Day Planner");
   const dt=dateOf(curW,cur),onToday=sameDay(dt,new Date());
   $("dayTitle").textContent=dt?(onToday?"Today, ":"")+dt.toLocaleDateString(undefined,{weekday:onToday?undefined:"long",month:"long",day:"numeric"}):"";
   $("subtitle").innerHTML=`Week ${curW} of ${n} · <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
   const any=hasAnyPlan(),wizOn=!S.setup.done&&!any;
   $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;
-  for(const id of ["tabs","day","saveState","quick","noteBox"])$(id).hidden=wizOn;if(wizOn)$("weeks").hidden=true;
+  for(const id of ["tabs","day","saveState","quick","noteBox"])$(id).hidden=wizOn;$("kids").hidden=wizOn||!multi();if(wizOn)$("weeks").hidden=true;
   if(wizOn)renderWizard();
   const exHere=Object.values(S.weeks).some(W=>JSON.stringify(W).includes('"ex":true'));
   $("welcome").innerHTML=wizOn?"":(exHere?`<div class="exbanner"><span>This is an <b>example week</b>. Select other days to see more.</span><button class="btn small" id="clearEx">Delete the example</button></div>`:"")+(any&&Store.mode==="demo"&&backupDue()?`<div class="banner"><b>Keep your planner safe.</b> Your planner is only in this browser. If you clear your browser data, you lose it. Download a backup each week.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-backup="1">Download a backup now</button></div></div>`:"")+(any?"":`<div class="banner"><b>Your week is empty.</b> To start, take photos of one week in your teacher's book.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-start="photos">Use photos</button><button class="btn fit" data-start="type">Type lessons</button><button class="btn fit" data-start="example">Show an example</button></div></div>`);
-  renderWeeks();renderTabs();renderGoals();renderDay();renderPhotoWeeks();
+  renderWeeks();renderKids();renderTabs();renderGoals();renderDay();renderPhotoWeeks();
   renderMissed();renderQuick(any);renderNote(any);
 }
+function renderKids(){$("kids").innerHTML=multi()?[["all","All kids",""],...S.kids.map(k=>[k.id,k.name,k.color])].map(([v,l,c])=>`<button data-kidsel="${esc(v)}" aria-pressed="${v===curKid}">${c?`<span class="kdot" style="background:${esc(c)}"></span>`:""}${esc(l)}</button>`).join(""):""}
+const goalVisible=g=>!multi()||curKid==="all"||!g.kid||g.kid===curKid;
 function renderQuick(any){
   if(!any){$("quick").innerHTML="";return}
-  const G=S.goals[curW]||[],met=G.filter(g=>g.s==="met").length,sh=!!S.short[curW+"-"+cur];
+  const G=(S.goals[curW]||[]).filter(goalVisible),met=G.filter(g=>g.s==="met").length,sh=!!S.short[curW+"-"+cur];
   const hasOptional=S.sections.some(x=>x.optional&&itemsFor(curW,cur,x.id).length);
   $("quick").innerHTML=`<button class="chip2" data-open="goals">${G.length?`Goals · ${met} of ${G.length} met`:"Week goals"}</button>`
     +(missedN?`<button class="chip2 warn" data-open="missed">${missedN} to catch up</button>`:"")
@@ -526,28 +562,46 @@ function renderWeeks(){const now=todayPos();
   const sel=$("weeks").querySelector('[aria-pressed="true"]');if(sel)sel.scrollIntoView({block:"nearest",inline:"center"})}
 function renderTabs(){const now=new Date();
   $("tabs").innerHTML=daysOf(curW).map(([k,l])=>{const d=dateOf(curW,k);return `<button data-d="${k}" aria-pressed="${k===cur}"${sameDay(d,now)?" data-today":""}>${l}<b>${d?d.getDate():""}</b></button>`}).join("")}
-function renderGoals(){const G=S.goals[curW]||[];
+function renderGoals(){const G=S.goals[curW]||[];const V=G.filter(goalVisible);
+  $("goalForBox").innerHTML=multi()?`<select id="goalFor" aria-label="Who is this goal for" style="flex:0 1 130px">${[["all","Everyone"],...S.kids.map(k=>[k.id,k.name])].map(([v,l])=>`<option value="${esc(v)}" ${v===(curKid==="all"?"all":curKid)?"selected":""}>${esc(l)}</option>`).join("")}</select>`:"";
   $("goalsTitle").textContent="Week "+curW+" goals";
-  const met=G.filter(g=>g.s==="met").length,marked=G.filter(g=>g.s).length;
-  $("goalsCount").textContent=G.length?(marked?met+" of "+G.length+" met":G.length+" goal"+(G.length===1?"":"s")):"none yet";
-  $("goalList").innerHTML=G.map((g,i)=>`<li><div>${esc(g.t)} <button class="addlink" data-gdel="${i}" aria-label="Remove goal">Remove</button></div><div class="gbtns">${[["met","Met"],["notyet","Not yet"],["carry","Carry over"]].map(([v,l])=>`<button type="button" data-g="${i}" data-v="${v}" aria-pressed="${g.s===v}">${l}</button>`).join("")}</div></li>`).join("")||`<li class="note" style="grid-template-columns:1fr">No goals for this week yet.</li>`;
+  const met=V.filter(g=>g.s==="met").length,marked=V.filter(g=>g.s).length;
+  $("goalsCount").textContent=V.length?(marked?met+" of "+V.length+" met":V.length+" goal"+(V.length===1?"":"s")):"none yet";
+  $("goalList").innerHTML=G.map((g,i)=>!goalVisible(g)?"":`<li><div>${esc(g.t)}${kidTag({kid:g.kid})} <button class="addlink" data-gdel="${i}" aria-label="Remove goal">Remove</button></div><div class="gbtns">${[["met","Met"],["notyet","Not yet"],["carry","Carry over"]].map(([v,l])=>`<button type="button" data-g="${i}" data-v="${v}" aria-pressed="${g.s===v}">${l}</button>`).join("")}</div></li>`).join("")||`<li class="note" style="grid-template-columns:1fr">No goals for this week yet.</li>`;
 }
+function itemLi(it,secId,o={}){const id=ck(curW,cur,it.id);
+  return `<li><div class="item"><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span><span class="main">${o.subj?`<span class="subj">${esc(o.subj)}</span>`:""}${esc(it.t)}${it.every?`<span class="daily">daily</span>`:""}${o.tag?kidTag(it):""}</span></span></label><button class="dots" data-item="${it.id}" data-sec="${secId}" aria-label="Change ${esc(it.t)}">⋯</button>${it.n?`<details class="steps"><summary>Steps</summary><span class="n">${esc(it.n)}</span></details>`:""}</div></li>`}
 function renderDay(){
   const sh=!!S.short[curW+"-"+cur];let n=0;const later=[];
-  $("day").innerHTML=S.sections.map(sec=>{
-    const items=itemsFor(curW,cur,sec.id);const hidden=sec.optional&&sh;
-    if(!items.length){if(!hidden)later.push(sec);return ""}
-    if(!hidden)n++;
-    const lis=items.map(it=>{const id=ck(curW,cur,it.id);
-      return `<li><div class="item"><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span><span class="main">${esc(it.t)}${it.every?`<span class="daily">daily</span>`:""}</span></span></label><button class="dots" data-item="${it.id}" data-sec="${sec.id}" aria-label="Change ${esc(it.t)}">⋯</button>${it.n?`<details class="steps"><summary>Steps</summary><span class="n">${esc(it.n)}</span></details>`:""}</div></li>`}).join("");
-    return `<section class="block ${esc(sec.color||"core")}${hidden?" short-hidden":""}"><header><h2><span class="stepn">${n}</span>${esc(sec.title)}</h2></header><div class="inner"><ul class="items">${lis}</ul><button class="addlink" data-addsec="${sec.id}">+ Add</button></div></section>`;
-  }).join("")+(later.length&&hasAnyPlan()?`<p class="nothing">Nothing planned today for ${later.map(x=>`<button data-addsec="${x.id}">${esc(x.title)}</button>`).join(", ")}.</p>`:"");
+  const secBlock=(sec,items,o={})=>{const hidden=sec.optional&&sh;if(!hidden)n++;
+    return `<section class="block ${esc(sec.color||"core")}${hidden?" short-hidden":""}"><header><h2><span class="stepn">${n}</span>${esc(sec.title)}</h2>${multi()&&sec.shared?`<span class="who">Everyone</span>`:""}</header><div class="inner"><ul class="items">${items.map(it=>itemLi(it,sec.id,{tag:o.tag})).join("")}</ul><button class="addlink" data-addsec="${sec.id}">+ Add</button></div></section>`};
+  let html="";
+  if(!multi()||curKid!=="all"){
+    html=S.sections.map(sec=>{const items=itemsFor(curW,cur,sec.id).filter(visible);
+      if(!items.length){if(!(sec.optional&&sh))later.push(sec);return ""}return secBlock(sec,items)}).join("");
+  }else{
+    let run=[];
+    const flush=()=>{if(!run.length)return "";const R=run;run=[];
+      const all=R.flatMap(sec=>(sec.optional&&sh)?[]:itemsFor(curW,cur,sec.id).map(it=>({sec,it})));
+      if(!all.length){R.forEach(sec=>{if(!(sec.optional&&sh))later.push(sec)});return ""}
+      const pick=R.map(x=>x.id).join(",");let out="";
+      const together=all.filter(x=>!x.it.kid||!kidById(x.it.kid));
+      if(together.length){n++;out+=`<section class="block core"><header><h2><span class="stepn">${n}</span>Together</h2><span class="who">Everyone</span></header><div class="inner"><ul class="items">${together.map(x=>itemLi(x.it,x.sec.id,{subj:x.sec.title})).join("")}</ul></div></section>`}
+      S.kids.forEach(k=>{const mine=all.filter(x=>x.it.kid===k.id);n++;
+        const done=mine.filter(x=>S.checks[ck(curW,cur,x.it.id)]).length;
+        out+=`<section class="block kid" style="--kc:${esc(k.color)}"><header><h2><span class="stepn">${n}</span>${esc(k.name)}</h2>${mine.length?`<span class="who">${done} of ${mine.length} done</span>`:""}</header><div class="inner">${mine.length?`<ul class="items">${mine.map(x=>itemLi(x.it,x.sec.id,{subj:x.sec.title})).join("")}</ul>`:`<p class="nothing" style="margin:6px 0">Nothing planned for ${esc(k.name)} today.</p>`}<button class="addlink" data-addsec="${R[0].id}" data-kid="${esc(k.id)}" data-pick="${esc(pick)}">+ Add</button></div></section>`});
+      return out};
+    for(const sec of S.sections){if(sec.shared){html+=flush();const items=itemsFor(curW,cur,sec.id);
+        if(!items.length){if(!(sec.optional&&sh))later.push(sec);continue}html+=secBlock(sec,items,{tag:true})}else run.push(sec)}
+    html+=flush();
+  }
+  $("day").innerHTML=html+(later.length&&hasAnyPlan()?`<p class="nothing">Nothing planned today for ${later.map(x=>`<button data-addsec="${x.id}">${esc(x.title)}</button>`).join(", ")}.</p>`:"");
 }
 function renderMissed(){
   const now=new Date();now.setHours(0,0,0,0);const out=[],n=weekMondays().length;
   for(let w=1;w<=n;w++)for(const [dk,l] of daysOf(w)){const d=dateOf(w,dk);if(!d||d>=now)continue;
     if(S.setup.since&&iso(d)<S.setup.since)continue;
-    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).forEach(it=>{const id=ck(w,dk,it.id);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:sec.title,t:it.t})})})}
+    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).filter(visible).forEach(it=>{const id=ck(w,dk,it.id);const k=multi()&&it.kid&&kidById(it.kid);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:(k?k.name+" · ":"")+sec.title,t:it.t})})})}
   missedN=out.length;$("missedCount").textContent=out.length?out.length+" to catch up":"all caught up";
   $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)} · ${esc(x.sec)}</span></span></label></li>`).join("")||`<li class="note">Nothing missed.</li>`;
 }
@@ -568,7 +622,7 @@ function openPanel(id){
   if(id==="goals"){renderGoals();$("goalAddRow").hidden=true;$("goalAddOpen").hidden=false;Sheet.open("Week "+curW+" goals",$("goalsPanel"));return}
   if(id==="missed"){renderMissed();Sheet.open("Catch up",$("missedPanel"));return}
   if(id==="photos"){Sheet.open("Fill from photos",$("photoPanel"));openPhotos();return}
-  if(id==="setup"){fillSetup();fillPassUI();Sheet.open("Settings",$("setupPanel"));return}
+  if(id==="setup"){kidDraft=null;fillSetup();fillPassUI();Sheet.open("Settings",$("setupPanel"));return}
   if(id==="password"){openPassword();return}
   if(id==="invite"){loadInvites();Sheet.open("Invite families",$("invitePanel"));return}
   if(id==="note"){Sheet.open("Note for "+dayName(cur)+" "+(dateOf(curW,cur)?dateOf(curW,cur).getDate():""),`<textarea id="noteText" style="min-height:160px" placeholder="What went well? What should you do again?" aria-label="Note for today" autofocus>${esc(S.notes[curW+"-"+cur]||"")}</textarea><p class="note" style="margin:0">Saves as you type.</p>`);
@@ -579,31 +633,38 @@ function openPanel(id){
       <li><button data-open="goals">Week goals<small>What your child should be able to do by the end of the week</small></button></li>
       ${missedN?`<li><button data-open="missed">Catch up<small>${missedN} unchecked from past days</small></button></li>`:""}
       <li><button id="copyNext">Copy this week to next week<small>Copies every item, not the checkmarks</small></button></li>
-      <li><button data-open="setup">Settings<small>School dates, subjects, backups</small></button></li>
+      <li><button data-open="setup">Settings<small>School dates, children, subjects, backups</small></button></li>
       ${isAdminFlag?`<li><button data-open="invite">Invite families<small>Send someone an invitation by email</small></button></li>`:""}
       <li><button id="menuSignOut">${Store.mode==="cloud"?"Sign out":"Exit"}<small>${esc(Store.mode==="cloud"?(Store.user.email||""):"Trying it out")}</small></button></li></ul>`);return}
 }
-function openAdd(secId){const sec=S.sections.find(x=>x.id===secId)||S.sections[0];if(!sec)return;
-  Sheet.open("Add to "+sec.title,`<input type="text" id="addT" placeholder="What to do (example: Lesson 12)" aria-label="What to do" autofocus>
+function openAdd(secId,kid,pick){const sec=S.sections.find(x=>x.id===secId)||S.sections[0];if(!sec)return;
+  const kidObj=kid&&kidById(kid),picks=pick?pick.split(",").map(id=>S.sections.find(x=>x.id===id)).filter(Boolean):[];
+  const who=kid||(multi()?(sec.shared?"all":(curKid!=="all"?curKid:S.kids[0].id)):"all");
+  Sheet.open(kidObj&&picks.length>1?"Add for "+kidObj.name:"Add to "+sec.title,`${picks.length>1?`<select id="addSec" aria-label="Subject">${picks.map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join("")}</select>`:""}
+    ${kidObj?"":forSeg(who)}<input type="hidden" id="addFor" value="${esc(kidObj?kid:"")}">
+    <input type="text" id="addT" placeholder="What to do (example: Lesson 12)" aria-label="What to do" autofocus>
     <button class="addlink" id="addStepsOpen">+ Add steps</button><textarea id="addN" hidden placeholder="Steps, one per line" aria-label="Steps"></textarea>
     <div class="seg" role="group" aria-label="When"><button data-when="day" aria-pressed="true">Just ${dateOf(curW,cur)?dateOf(curW,cur).toLocaleDateString(undefined,{weekday:"long"}):dayName(cur)}</button><button data-when="every" aria-pressed="false">Every day this week</button></div>
     <button class="btn primary" id="addSave" data-sec="${sec.id}">Add</button>`)}
 function openItem(id,secId){const f=findItem(id);if(!f)return;const it=f.L[f.i];
   Sheet.open("Change item",`<input type="text" id="itT" value="${esc(it.t)}" aria-label="What to do">
     <textarea id="itN" placeholder="Steps, one per line" aria-label="Steps">${esc(it.n||"")}</textarea>
+    ${forSeg(it.kid&&kidById(it.kid)?it.kid:"all")}
     ${f.every?`<p class="note" style="margin:0">This item is on every day this week.</p>`:""}
     <div class="row"><button class="btn primary fit" id="itSave" data-id="${id}">Save</button><button class="btn danger fit" id="itDel" data-id="${id}">Remove</button></div>`)}
 $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   if(b.id==="addStepsOpen"){b.hidden=true;$("addN").hidden=false;$("addN").focus();return}
+  if(b.dataset.for){b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));return}
   if(b.dataset.when){b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));return}
   if(b.id==="addSave"){const t=$("addT").value.trim();if(!t){$("addT").focus();return}
-    const every=$("sheetBody").querySelector('[data-when="every"]').getAttribute("aria-pressed")==="true",W=wk(curW),sec=b.dataset.sec,it={id:uid(),t,n:$("addN").value.trim()};
+    const every=$("sheetBody").querySelector('[data-when="every"]').getAttribute("aria-pressed")==="true",W=wk(curW),sec=$("addSec")?$("addSec").value:b.dataset.sec,it={id:uid(),t,n:$("addN").value.trim()};
+    const forK=$("addFor").value||segVal();if(multi()&&forK!=="all")it.kid=forK;
     if(every)(W.every[sec]=W.every[sec]||[]).push(it);else{W.days[cur]=W.days[cur]||{};(W.days[cur][sec]=W.days[cur][sec]||[]).push(it)}
     save(curW);Sheet.close();toast("Added");return}
-  if(b.id==="itSave"){const f=findItem(b.dataset.id);if(f){const t=$("itT").value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=$("itN").value.trim();save(curW)}Sheet.close();toast("Saved");return}
+  if(b.id==="itSave"){const f=findItem(b.dataset.id);if(f){const t=$("itT").value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=$("itN").value.trim();if(multi()){const v=segVal();if(v==="all")delete f.L[f.i].kid;else f.L[f.i].kid=v}save(curW)}Sheet.close();toast("Saved");return}
   if(b.id==="itDel"){const f=findItem(b.dataset.id);if(!f)return;if(!confirmInline(b,f.every?"This removes it from every day this week.":"This removes the item.","Tap to remove"))return;f.L.splice(f.i,1);save(curW);Sheet.close();toast("Removed");return}
   if(b.id==="copyNext"){if(curW>=weekMondays().length){toast("This is the last week");return}
-    const src=wk(curW),dst=wk(curW+1);const cp=L=>L.filter(x=>!x.ex).map(x=>({id:uid(),t:x.t,n:x.n}));
+    const src=wk(curW),dst=wk(curW+1);const cp=L=>L.filter(x=>!x.ex).map(x=>({id:uid(),t:x.t,n:x.n,...(x.kid?{kid:x.kid}:{})}));
     for(const sec in src.every)dst.every[sec]=[...(dst.every[sec]||[]),...cp(src.every[sec])];
     for(const dk in src.days){dst.days[dk]=dst.days[dk]||{};for(const sec in src.days[dk])dst.days[dk][sec]=[...(dst.days[dk][sec]||[]),...cp(src.days[dk][sec])]}
     save(curW+1);Sheet.close();toast("Copied into Week "+(curW+1));return}
@@ -611,7 +672,8 @@ $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("button");i
 });
 $("sheetBody").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addT"){e.preventDefault();$("addSave").click()}});
 document.addEventListener("click",e=>{const o=e.target.closest("[data-open]");if(o){e.preventDefault();openPanel(o.dataset.open);return}
-  const a=e.target.closest("[data-addsec]");if(a){openAdd(a.dataset.addsec);return}
+  const a=e.target.closest("[data-addsec]");if(a){openAdd(a.dataset.addsec,a.dataset.kid,a.dataset.pick);return}
+  const ks=e.target.closest("[data-kidsel]");if(ks){curKid=ks.dataset.kidsel;render();window.scrollTo(0,0);return}
   const d=e.target.closest("[data-item]");if(d){openItem(d.dataset.item,d.dataset.sec);return}
   if(e.target.id==="weekToggle"){$("weeks").hidden=!$("weeks").hidden;render();return}
   if(e.target.id==="shortChip"){const k=curW+"-"+cur;if(S.short[k])delete S.short[k];else S.short[k]=true;save(curW);render();return}});
@@ -620,8 +682,8 @@ $("goalAddOpen").addEventListener("click",()=>{$("goalAddOpen").hidden=true;$("g
 /* ----- events ----- */
 $("weeks").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.today){const p=todayPos();curW=p.w;cur=p.d}else curW=+b.dataset.w;editId=null;render()});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(!b)return;cur=b.dataset.d;editId=null;render()});
-document.addEventListener("change",e=>{const c=e.target.closest("input[data-ck]");if(!c)return;const k=c.dataset.ck;if(c.checked)S.checks[k]=true;else delete S.checks[k];save(+k.split("-")[0]);if(c.closest("#missedList"))render();else renderMissed()});
-$("goalAddBtn").addEventListener("click",()=>{const t=$("goalInput").value.trim();if(!t)return;(S.goals[curW]=S.goals[curW]||[]).push({t});$("goalInput").value="";save(curW);renderGoals()});
+document.addEventListener("change",e=>{const c=e.target.closest("input[data-ck]");if(!c)return;const k=c.dataset.ck;if(c.checked)S.checks[k]=true;else delete S.checks[k];save(+k.split("-")[0]);if(c.closest("#missedList"))render();else{renderMissed();if(multi()&&curKid==="all"&&c.closest("#day")){const y=scrollY;renderDay();scrollTo(0,y)}}});
+$("goalAddBtn").addEventListener("click",()=>{const t=$("goalInput").value.trim();if(!t)return;const gf=$("goalFor")?$("goalFor").value:"all";(S.goals[curW]=S.goals[curW]||[]).push(gf==="all"?{t}:{t,kid:gf});$("goalInput").value="";save(curW);renderGoals()});
 $("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("goalAddBtn").click()});
 $("goalList").addEventListener("click",e=>{const G=S.goals[curW]||[];const b=e.target.closest("button");if(!b)return;
   if(b.dataset.gdel!=null)G.splice(+b.dataset.gdel,1);else if(b.dataset.g!=null){const g=G[+b.dataset.g];g.s=g.s===b.dataset.v?undefined:b.dataset.v}
@@ -631,12 +693,13 @@ function findItem(id){const W=wk(curW);for(const sec in W.every){const L=W.every
   for(const sec in (W.days[cur]||{})){const L=W.days[cur][sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:false}}return null}
 /* ----- setup ----- */
 function fillSetup(){
-  $("sName").value=S.setup.name||"";$("sChild").value=S.setup.child||"";$("sStart").value=S.setup.start||"";$("sWeeks").value=S.setup.weeks;$("sBreaks").value=(S.setup.breaks||[]).join(", ");
+  $("sName").value=S.setup.name||"";renderKidList();$("sStart").value=S.setup.start||"";$("sWeeks").value=S.setup.weeks;$("sBreaks").value=(S.setup.breaks||[]).join(", ");
   $("sDays").innerHTML=DAYS.map(([k,l])=>`<label class="fit" style="font-family:var(--sans);font-size:.9rem"><input type="checkbox" value="${k}" ${S.setup.days.includes(k)?"checked":""}> ${l}</label>`).join("");
   $("secList").innerHTML=S.sections.map((s,i)=>`<div class="secedit" data-i="${i}">
     <div class="row"><input type="text" data-s="title" value="${esc(s.title)}" aria-label="Section name"><input type="text" data-s="tag" value="${esc(s.tag||"")}" placeholder="Short label (optional)" aria-label="Section label"></div>
     <div class="row"><select data-s="color" aria-label="Color" style="flex:0 1 150px">${[["morning","Orange"],["core","Green"],["extra","Brown"],["read","Purple"]].map(([v,l])=>`<option value="${v}" ${s.color===v?"selected":""}>${l}</option>`).join("")}</select>
       <label class="fit" style="font-family:var(--sans);font-size:.85rem"><input type="checkbox" data-s="optional" ${s.optional?"checked":""}> Optional</label>
+      ${multi()?`<label class="fit" style="font-family:var(--sans);font-size:.85rem"><input type="checkbox" data-s="shared" ${s.shared?"checked":""}> Everyone together</label>`:""}
       <span class="fit" style="display:flex;gap:4px"><button class="btn small" data-mv="-1" aria-label="Move up">↑</button><button class="btn small" data-mv="1" aria-label="Move down">↓</button><button class="btn small" data-rm="1">Remove</button></span></div></div>`).join("");
 }
 function readSections(){$("secList").querySelectorAll(".secedit").forEach(el=>{const s=S.sections[+el.dataset.i];el.querySelectorAll("[data-s]").forEach(f=>{s[f.dataset.s]=f.type==="checkbox"?f.checked:f.value.trim()});if(!s.title)s.title="Untitled section"})}
@@ -650,8 +713,22 @@ $("saveSetup").addEventListener("click",()=>{readSections();
   const weeks=Math.max(1,Math.min(60,parseInt($("sWeeks").value,10)||36));const bad=[];
   const breaks=$("sBreaks").value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean).filter(x=>{if(parseISO(x))return true;bad.push(x);return false});
   const days=[...$("sDays").querySelectorAll("input:checked")].map(x=>x.value);if(!days.length){toast("Choose at least one school day");return}
-  S.setup={...S.setup,name:$("sName").value.trim()||"Homeschool Day Planner",child:$("sChild").value.trim(),start:iso(st),weeks,breaks,days};
+  S.setup={...S.setup,name:$("sName").value.trim()||"Homeschool Day Planner",start:iso(st),weeks,breaks,days};
   save("meta");render();toast(bad.length?"Saved. Skipped dates that weren't YYYY-MM-DD: "+bad.join(", "):"Setup saved")});
+let kidDraft=null;
+function renderKidList(){if(!kidDraft)kidDraft=S.kids.map(k=>({...k}));if(!kidDraft.length)kidDraft.push({id:"k"+uid(),name:"",color:KID_COLORS[0]});
+  $("kidList").innerHTML=kidDraft.map((k,i)=>`<div class="kidrow"><label class="lbl" style="grid-template-columns:auto 1fr;align-items:center"><span class="kdot" style="background:${esc(k.color)}"></span><input type="text" data-kidname="${i}" value="${esc(k.name)}" placeholder="First name" aria-label="Child ${i+1} name"></label>${kidDraft.length>1?`<button class="btn small" data-kidrm="${i}">Remove</button>`:"<span></span>"}</div>`).join("")}
+function readKidDraft(){$("kidList").querySelectorAll("[data-kidname]").forEach(f=>{kidDraft[+f.dataset.kidname].name=f.value.trim().slice(0,40)})}
+$("kidAdd").addEventListener("click",()=>{readKidDraft();const used=new Set(kidDraft.map(k=>k.color));kidDraft.push({id:"k"+uid(),name:"",color:KID_COLORS.find(c=>!used.has(c))||KID_COLORS[kidDraft.length%8]});renderKidList();const f=$("kidList").querySelector(`[data-kidname="${kidDraft.length-1}"]`);if(f)f.focus()});
+$("kidList").addEventListener("click",e=>{const b=e.target.closest("[data-kidrm]");if(!b)return;readKidDraft();const k=kidDraft[+b.dataset.kidrm];
+  if(S.kids.some(x=>x.id===k.id)&&!confirmInline(b,(k.name||"This child")+"'s lessons and goals are removed when you save.","Tap to remove"))return;kidDraft.splice(+b.dataset.kidrm,1);renderKidList()});
+$("saveKids").addEventListener("click",()=>{readKidDraft();const next=kidDraft.filter(k=>k.name);const was=S.kids.length;
+  const gone=new Set(S.kids.filter(k=>!next.some(x=>x.id===k.id)).map(k=>k.id));
+  if(gone.size){for(const w in S.weeks){const W=S.weeks[w],strip=L=>L.filter(x=>!gone.has(x.kid));for(const sec in W.every)W.every[sec]=strip(W.every[sec]);for(const dk in W.days)for(const sec in W.days[dk])W.days[dk][sec]=strip(W.days[dk][sec])}
+    for(const w in S.goals)S.goals[w]=S.goals[w].filter(g=>!gone.has(g.kid))}
+  S.kids=next.map(k=>({id:k.id,name:k.name,color:k.color}));S.setup.child=S.kids.length?S.kids[0].name:"";if(was<=1&&S.kids.length>1)adoptForFirstKid();
+  if(S.kids.length<=1)curKid="all";kidDraft=null;save("meta");fillSetup();render();
+  toast(S.kids.length>1?"Saved. Use the name buttons at the top to switch.":"Saved")});
 $("saveSecs").addEventListener("click",()=>{readSections();save("meta");render();toast("Subjects saved")});
 
 /* ----- backup ----- */
@@ -673,7 +750,10 @@ $("resetBtn").addEventListener("click",e=>{if(!confirmInline(e.target,"This eras
 let sampleNS=null,limits=null,phAbort=null,proposal=null;
 function renderPhotoWeeks(){const sel=$("phWeek"),v=sel.value||String(curW);sel.innerHTML=weekMondays().map((m,i)=>`<option value="${i+1}">Week ${i+1} (${fmt(m)})</option>`).join("");sel.value=String(Math.min(+v||curW,weekMondays().length))}
 $("phFiles").addEventListener("change",()=>{const n=$("phFiles").files.length;$("phCount").textContent=n?n+" photo"+(n===1?"":"s")+" ready.":"";$("phGo").hidden=!n;$("phGo").classList.toggle("primary",!!n)});
-function openPhotos(){$("phWeek").value=String(curW);
+let phKid="all";
+function renderPhFor(){$("phForBox").innerHTML=multi()?`<div style="display:grid;gap:8px"><b style="font:600 .95rem var(--sans)">Who is this book for?</b><div class="kids" style="margin:0">${[...S.kids.map(k=>[k.id,k.name,k.color]),["all","Everyone",""]].map(([v,l,c])=>`<button type="button" data-phfor="${esc(v)}" aria-pressed="${v===phKid}">${c?`<span class="kdot" style="background:${esc(c)}"></span>`:""}${esc(l)}</button>`).join("")}</div><p class="note" style="margin:0">Pick Everyone for books you teach together, like Morning Time or read aloud.</p></div>`:""}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-phfor]");if(b){phKid=b.dataset.phfor;renderPhFor()}});
+function openPhotos(){$("phWeek").value=String(curW);phKid=multi()?(curKid!=="all"?curKid:S.kids[0].id):"all";renderPhFor();
   const ok=Store.mode==="cloud";limits=ok?{images:{maxCount:5,maxInputBytes:30e6,mediaTypes:["image/jpeg","image/png","image/webp","image/gif"]}}:false;
   $("photoForm").hidden=!ok;const u=$("photoUnavailable");u.hidden=ok;
   if(!ok)u.textContent="Photos need an account. You can still add lessons by hand with the + Add links."}
@@ -738,15 +818,15 @@ $("phList").addEventListener("input",e=>{const f=e.target.closest("[data-p]");if
   const obj=li.dataset.g!=null?proposal.goals[+li.dataset.g]:proposal.items[+li.dataset.i];const k=f.dataset.p;
   obj[k]=f.type==="checkbox"?f.checked:(k==="realWeek"?+f.value:f.value);if(k==="on"){li.classList.toggle("off",!f.checked);$("phAdd").textContent=`Add ${plural(proposal.items.filter(x=>x.on).length,"item")}`+(proposal.goals.length?` and ${plural(proposal.goals.filter(g=>g.on).length,"goal")}`:"")}});
 $("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new Set();let ni=0,ng=0;
-  proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000)};
+  proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000)};if(multi()&&phKid!=="all"&&kidById(phKid))it.kid=phKid;
     if(x.day==="every")(W.every[x.section]=W.every[x.section]||[]).push(it);else{W.days[x.day]=W.days[x.day]||{};(W.days[x.day][x.section]=W.days[x.day][x.section]||[]).push(it)}touched.add(x.realWeek);ni++});
-  proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300)});touched.add(g.realWeek);ng++});
+  proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300),...(multi()&&phKid!=="all"&&kidById(phKid)?{kid:phKid}:{})});touched.add(g.realWeek);ng++});
   touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;$("phFiles").value="";$("phMsg").textContent="";$("phCount").textContent="";$("phGo").hidden=true;
   if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}Sheet.close();toast(ng?`Added ${plural(ni,"item")} and ${plural(ng,"goal")}`:`Added ${plural(ni,"item")}`)});
 $("phDiscard").addEventListener("click",()=>{proposal=null;$("phResults").hidden=true;$("phMsg").textContent=""});
 
 /* ----- first-visit welcome ----- */
-const WIZ={step:1,start:"",days:null,secs:null};
+const WIZ={step:1,start:"",days:null,secs:null,kids:""};
 const WIZ_DESC={morning:"Prayer, calendar, songs, memory work, together",language:"Phonics, spelling, and your child reading aloud",writing:"Copywork, handwriting, or cursive",math:"Your math lesson",science:"A weekly hands-on lesson",extra:"Art, music, crafts, history: a menu for good days",readaloud:"A book you read to your child",close:"A short way to end the school day"};
 function renderWizard(){
   if(!WIZ.start)WIZ.start=S.setup.start;if(!WIZ.days)WIZ.days=[...S.setup.days];if(!WIZ.secs)WIZ.secs=S.sections.map(x=>x.id);
@@ -754,6 +834,7 @@ function renderWizard(){
   if(WIZ.step===1)h=`<div class="stepcount">Step 1 of 3</div><h2>Welcome. When does school start?</h2><p>Select your first day of school. It can be today. Then select your school days. You can change these later.</p>
     <label class="lbl">First day of school<input type="date" id="wzStart" value="${esc(WIZ.start)}"></label>
     <div class="row">${DAYS.map(([k,l])=>`<label class="chip fit"><input type="checkbox" data-wday="${k}" ${WIZ.days.includes(k)?"checked":""}>${l}</label>`).join("")}</div>
+    <label class="lbl">Who do you teach? Type first names with commas between them (optional)<input type="text" id="wzKids" value="${esc(WIZ.kids)}" placeholder="Example: Ella, Sam"></label>
     <div class="wiznav"><span></span><button class="btn primary" data-wiz="next">Next</button></div>`;
   if(WIZ.step===2)h=`<div class="stepcount">Step 2 of 3</div><h2>What do you teach each day?</h2><p>Each item is a section of your day. Remove the check from items you do not teach. You can change the names later in Setup.</p>
     <div class="chips">${S.sections.map(x=>`<label class="chip"><input type="checkbox" data-wsec="${esc(x.id)}" ${WIZ.secs.includes(x.id)?"checked":""}><span>${esc(x.title)}<small>${esc(WIZ_DESC[x.id]||x.hint||"")}</small></span></label>`).join("")}</div>
@@ -769,7 +850,7 @@ function renderWizard(){
   w.innerHTML=`<div class="wiz">${h}</div>`;
 }
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="wzNew"){e.preventDefault();const b=document.querySelector('[data-wiz="add"]');if(b)b.click()}});
-function wizRead(){const st=$("wzStart");if(st)WIZ.start=st.value;
+function wizRead(){const st=$("wzStart");if(st)WIZ.start=st.value;const wk_=$("wzKids");if(wk_)WIZ.kids=wk_.value;
   const d=[...document.querySelectorAll("[data-wday]")];if(d.length)WIZ.days=d.filter(x=>x.checked).map(x=>x.dataset.wday);
   const c=[...document.querySelectorAll("[data-wsec]")];if(c.length)WIZ.secs=c.filter(x=>x.checked).map(x=>x.dataset.wsec)}
 $("wizard").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;wizRead();
@@ -779,7 +860,8 @@ $("wizard").addEventListener("click",e=>{const b=e.target.closest("button");if(!
   if(b.dataset.wiz==="add"){const t=($("wzNew").value||"").trim().slice(0,60);if(!t){$("wzNew").focus();return}
     const id="s"+uid(),before=S.sections.findIndex(x=>x.id==="extra"),sec={id,title:t,tag:"",color:"core",optional:false,hint:"",mine:""};
     if(before>=0)S.sections.splice(before,0,sec);else S.sections.push(sec);WIZ.secs.push(id);renderWizard();const n=$("wzNew");if(n)n.focus();toast("Added "+t);return}
-  if(b.dataset.wizgo){S.setup={...S.setup,start:WIZ.start,days:WIZ.days,done:true,since:iso(new Date())};S.sections=S.sections.filter(x=>WIZ.secs.includes(x.id));save("meta");
+  if(b.dataset.wizgo){S.setup={...S.setup,start:WIZ.start,days:WIZ.days,done:true,since:iso(new Date())};S.sections=S.sections.filter(x=>WIZ.secs.includes(x.id));
+    const names=[...new Set(WIZ.kids.split(/[,;\n]/).map(x=>x.trim().slice(0,40)).filter(Boolean))].slice(0,8);if(names.length){S.kids=names.map((nm,i)=>({id:"k"+uid(),name:nm,color:KID_COLORS[i%8]}));S.setup.child=names[0]}curKid="all";save("meta");
     const p=todayPos();curW=p.w;cur=p.d;startWith(b.dataset.wizgo)}});
 function startWith(kind){
   if(kind==="example"){loadExample(curW);render();toast("Example week added");return}
@@ -792,7 +874,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-start]");i
 function loadExample(w){
   const W=wk(w),has=id=>S.sections.some(x=>x.id===id),ds=daysOf(w).map(d=>d[0]);
   const ev=(sec,t,n)=>{if(has(sec))(W.every[sec]=W.every[sec]||[]).push({id:uid(),t,n,ex:true})};
-  const on=(dk,sec,t,n)=>{if(has(sec)&&ds.includes(dk)){W.days[dk]=W.days[dk]||{};(W.days[dk][sec]=W.days[dk][sec]||[]).push({id:uid(),t,n,ex:true})}};
+  const shared=id=>(S.sections.find(x=>x.id===id)||{}).shared;
+  const on=(dk,sec,t,n)=>{if(has(sec)&&ds.includes(dk)){W.days[dk]=W.days[dk]||{};const L=(W.days[dk][sec]=W.days[dk][sec]||[]);
+    if(multi()&&!shared(sec))S.kids.forEach(k=>L.push({id:uid(),t,n,ex:true,kid:k.id}));else L.push({id:uid(),t,n,ex:true})}};
   ev("morning","Example: Opening prayer","1. Gather at the table.\n2. Pray together.\n3. Sit down for calendar time.");
   ev("morning","Example: Calendar and weather","1. Say today's date together.\n2. Name yesterday and tomorrow.\n3. Look outside and name the weather.");
   ["mon","tue","wed","thu","fri"].forEach((dk,i)=>{
@@ -810,7 +894,7 @@ function loadExample(w){
 /* ----- start ----- */
 let started=false;
 function startOnce(){if(started){render();return}started=true;let lp=null;try{lp=JSON.parse(localStorage.getItem(LKEY+"-pos")||"null")}catch(e){}
-  const p=lp&&lp.w?lp:todayPos();curW=p.w;cur=p.d;render()}
+  const p=lp&&lp.w?lp:todayPos();curW=p.w;cur=p.d;curKid=(lp&&lp.k)||"all";render()}
 async function callInvite(payload){const {data:sess}=await Store.sb.auth.getSession();const token=sess&&sess.session&&sess.session.access_token;const cfg=window.PLANNER_CONFIG||{};
   const r=await fetch(cfg.supabaseUrl.replace(/\/$/,"")+"/functions/v1/invite",{method:"POST",headers:{"Content-Type":"application/json",apikey:cfg.supabaseAnonKey,Authorization:"Bearer "+token},body:JSON.stringify(payload)});
   const out=await r.json().catch(()=>({}));if(!r.ok)throw new Error(out.error||"Something went wrong. Try again.");return out}

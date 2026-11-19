@@ -146,6 +146,59 @@ label.lbl{display:grid;gap:4px;font-size:.85rem;font-family:var(--sans)}
 .foot{text-align:center;font-size:.8rem;color:var(--muted);margin:30px 0 0;font-family:var(--sans)}
 .foot a{color:inherit}
 input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--paper);color:var(--ink);width:100%}
+/* calm day view */
+.dayhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-top:4px}
+.dayhead .eyebrow{font-family:var(--sans);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dayhead h1{font-size:1.6rem;margin:2px 0 0}
+.dayhead .sub{font-family:var(--sans);font-size:.88rem;color:var(--muted);margin-top:2px}
+.dayhead .sub button{all:unset;cursor:pointer;color:var(--core);text-decoration:underline;text-underline-offset:3px}
+.menubtn{flex:none;font:600 .9rem var(--sans);border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px}
+.status:empty{display:none}
+.daytabs{display:flex;gap:6px;margin:14px 0 6px;overflow-x:auto;scrollbar-width:none}
+.daytabs button{flex:1 0 auto;min-width:54px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:6px 4px;font:500 .8rem/1.2 var(--sans)}
+.daytabs button b{display:block;font-size:1.05rem}
+.daytabs button[aria-pressed="true"]{background:var(--core);color:var(--paper);border-color:var(--core)}
+.daytabs button[data-today]:not([aria-pressed="true"]){border-color:var(--morn);color:var(--morn)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.chip2{font:500 .8rem var(--sans);border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 11px}
+.chip2.warn{border-color:var(--morn);color:var(--morn)}
+.chip2[aria-pressed="true"]{background:var(--morn);border-color:var(--morn);color:var(--paper)}
+.item{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:start}
+.item .dots{all:unset;cursor:pointer;color:var(--muted);font:700 1.1rem/1 var(--sans);padding:2px 6px;border-radius:8px}
+.item .dots:focus-visible{outline:2px solid var(--focus)}
+.daily{font:600 .65rem var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin-left:6px;vertical-align:2px}
+.steps{grid-column:1/-1;margin:2px 0 0 34px}
+.steps summary{cursor:pointer;font:500 .8rem var(--sans);color:var(--core);list-style:none}
+.steps summary::-webkit-details-marker{display:none}
+.steps summary::before{content:"▸ "}.steps[open] summary::before{content:"▾ "}
+.steps .n{display:block;font-size:.9rem;color:var(--muted);white-space:pre-wrap;font-family:var(--sans);margin-top:4px}
+.addlink{all:unset;cursor:pointer;font:500 .8rem var(--sans);color:var(--muted);padding:6px 0 2px;display:inline-block}
+.addlink:hover,.addlink:focus-visible{color:var(--core)}
+.nothing{font:.85rem var(--sans);color:var(--muted);margin:14px 2px}
+.nothing button{all:unset;cursor:pointer;color:var(--core);text-decoration:underline;text-underline-offset:3px}
+.notebtn{all:unset;cursor:pointer;display:block;font:500 .9rem var(--sans);color:var(--muted);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin:14px 0}
+.notecard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0;font-family:var(--sans)}
+.notecard p{margin:4px 0 0;white-space:pre-wrap}
+/* pop-up sheet */
+.sheet-bg{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 35%,transparent);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--paper);width:100%;max-width:620px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:6px 18px calc(22px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 30px rgba(0,0,0,.18)}
+@media (min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:18px;max-height:84vh}}
+.sheet-head{position:sticky;top:0;background:var(--paper);display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px;z-index:1}
+.sheet-head h2{font-size:1.15rem}
+.sheet-body{display:grid;gap:12px}
+.sheet .panel{border:0;padding:0;margin:0;background:none}
+.menu{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.menu button{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:1px;width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;font:600 .98rem var(--sans);color:var(--ink)}
+.menu button small{font-weight:400;color:var(--muted);font-size:.82rem}
+.menu button:focus-visible{outline:2px solid var(--focus)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--card);color:var(--ink);font:500 .88rem var(--sans);padding:8px}
+.seg button[aria-pressed="true"]{background:var(--core);color:var(--paper)}
+.acc{border-top:1px solid var(--line);padding:10px 0}
+.acc>summary{cursor:pointer;font:600 1rem var(--sans);list-style:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary::after{content:" ▸";color:var(--muted)}.acc[open]>summary::after{content:" ▾"}
+.acc>div{display:grid;gap:10px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -172,30 +225,33 @@ input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8p
   <p class="note" style="text-align:center">No invitation yet? Ask the person who told you about this planner.</p>
   <p class="foot"><a href="privacy.html">Privacy</a></p>
 </div>
-<div class="acct" id="acctBar" hidden><span id="acctWho"></span><button class="btn small" id="signOutBtn">Sign out</button></div>
+<div class="acct" id="acctBar" hidden style="display:none!important"><span id="acctWho"></span><button class="btn small" id="signOutBtn">Sign out</button></div>
 
 <div class="wrap" id="appView" hidden>
-  <div class="top" id="topbar">
+  <header class="dayhead" id="topbar">
     <div>
-      <h1 id="title">Homeschool Day Planner</h1>
+      <div class="eyebrow" id="title">Homeschool Day Planner</div>
+      <h1 id="dayTitle"></h1>
       <div class="sub" id="subtitle"></div>
     </div>
-    <div class="tools">
-      <button class="btn" id="editBtn" aria-pressed="false">Plan this week</button>
-      <button class="btn" id="shortBtn" aria-pressed="false" title="Hide the optional sections for today">Short day</button>
-      <button class="btn" id="setupBtn">Setup</button>
-    </div>
-  </div>
-  <p class="lede" id="lede">Do each section in order. Check each item when you finish it.</p>
-  <div class="status" id="saveState" role="status">Loading your planner…</div>
+    <button class="menubtn" id="menuBtn" aria-haspopup="dialog">Menu</button>
+  </header>
+  <div class="status" id="saveState" role="status"></div>
 
   <div id="wizard" hidden></div>
   <div id="welcome"></div>
-  <div class="weeks" id="weeks" role="group" aria-label="Weeks"></div>
-  <div class="tabs" id="tabs" role="group" aria-label="Days"></div>
+  <div class="weeks" id="weeks" role="group" aria-label="Weeks" hidden></div>
+  <div class="daytabs" id="tabs" role="group" aria-label="Days"></div>
+  <div class="quick" id="quick"></div>
 
-  <details class="panel photo" id="photoPanel">
-    <summary><h2>Fill from photos</h2><span class="note">Claude reads your book and makes your week</span></summary>
+  <div id="day"></div>
+
+  <div id="noteBox"></div>
+
+  <p class="foot">Only you can see your planner. <a href="privacy.html">Privacy</a></p>
+</div>
+<div id="sheetStore" hidden>
+  <section class="panel" id="photoPanel">
     <div class="ui" style="display:grid;gap:10px;margin-top:10px">
       <ol class="steps3">
         <li><b>1. Photos</b>Take photos of one week of lessons in your teacher's book.</li>
@@ -204,9 +260,10 @@ input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8p
       </ol>
       <div id="photoUnavailable" class="hint" hidden></div>
       <div id="photoForm" style="display:grid;gap:10px">
-        <label class="lbl">Photos
-          <input type="file" id="phFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+        <label class="btn primary" style="text-align:center;padding:12px;cursor:pointer">Take or choose photos
+          <input type="file" id="phFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif" hidden>
         </label>
+        <span class="note" id="phCount"></span>
         <details class="more"><summary>More options</summary><div style="display:grid;gap:10px;margin-top:10px">
         <div class="row">
           <label class="lbl">What the photos show
@@ -221,7 +278,7 @@ input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8p
         </label>
         <p class="note" style="margin:0">Your photos go to Claude to read. This site does not keep your photos. You can read up to <span id="phLimit">300</span> pages each month.</p>
         </div></details>
-        <div class="row"><button class="btn primary fit" id="phGo">Read my photos</button><button class="btn fit" id="phStop" hidden>Stop</button><span class="note" id="phMsg" role="status"></span></div>
+        <div class="row"><button class="btn fit" id="phGo" hidden>Read my photos</button><button class="btn fit" id="phStop" hidden>Stop</button><span class="note" id="phMsg" role="status"></span></div>
       </div>
       <div id="phResults" hidden>
         <h3 style="margin-top:6px">Check before you add</h3>
@@ -231,46 +288,39 @@ input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8p
         <div class="row" style="margin-top:10px"><button class="btn primary fit" id="phAdd">Add to planner</button><button class="btn fit" id="phDiscard">Cancel</button></div>
       </div>
     </div>
-  </details>
-
-  <details class="panel" id="goalsPanel">
-    <summary><h2 id="goalsTitle">This week's goals</h2><span class="note" id="goalsCount"></span></summary>
-    <p class="note" style="margin:6px 0 0">Write what your child must do by the end of the week. On the last day, mark each goal.</p>
-    <ul class="glist" id="goalList"></ul>
-    <div class="row" style="margin-top:8px">
-      <input type="text" id="goalInput" placeholder="Example: Read words with the long a sound" aria-label="New goal">
-      <button class="btn primary fit" id="goalAddBtn">Add goal</button>
-    </div>
-    <details class="more" style="margin-top:8px"><summary>How another family uses this</summary><p class="note" style="margin:6px 0 0">They write one goal for each subject. Each goal starts with “By Friday, my child can”. They read the goals on Monday. They mark the goals on Friday.</p></details>
-  </details>
-
-  <div id="day"></div>
-
-  <section class="panel" id="notesPanel">
-    <h2>Teacher notes</h2>
-    <p class="note" style="margin:4px 0 8px">Write what went well and what to do again. This page saves your notes automatically.</p>
-    <textarea id="notes" placeholder="Notes for today" aria-label="Teacher notes for today"></textarea>
   </section>
 
-  <details class="panel" id="missedPanel">
-    <summary><h2>Missed items</h2><span class="note" id="missedCount"></span></summary>
-    <p class="note" style="margin:6px 0">These items from past school days are not checked. Check them when you finish them.</p>
-    <ul class="items" id="missedList"></ul>
-  </details>
+  <section class="panel" id="goalsPanel">
+    <span id="goalsTitle" hidden></span><span id="goalsCount" hidden></span>
+    <p class="note" style="margin:0">What should your child be able to do by the end of the week? On the last day, mark each goal.</p>
+    <ul class="glist" id="goalList"></ul>
+    <button class="addlink" id="goalAddOpen">+ Add a goal</button>
+    <div class="row" id="goalAddRow" hidden>
+      <input type="text" id="goalInput" placeholder="Example: Read words with the long a sound" aria-label="New goal">
+      <button class="btn primary fit" id="goalAddBtn">Add</button>
+    </div>
+    <details class="more" style="margin-top:8px"><summary>How another family uses this</summary><p class="note" style="margin:6px 0 0">They write one goal for each subject. Each goal starts with “By Friday, my child can”. They read the goals on Monday. They mark the goals on Friday.</p></details>
+  </section>
 
-  <details class="panel" id="invitePanel" hidden>
-    <summary><h2>Invite families</h2><span class="note" id="inviteCount"></span></summary>
-    <div style="display:grid;gap:10px;margin-top:10px">
+  <section class="panel" id="missedPanel">
+    <span id="missedCount" hidden></span>
+    <p class="note" style="margin:0">Items from past school days that aren't checked. Check them off as you catch up.</p>
+    <ul class="items" id="missedList"></ul>
+  </section>
+
+  <section class="panel" id="invitePanel">
+    <div style="display:grid;gap:10px">
+      <span class="note" id="inviteCount"></span>
       <p class="note" style="margin:0">Type a family's email. They get an email with a link to make their planner. Only people you invite can sign in.</p>
       <div class="row"><input type="text" id="invEmail" inputmode="email" autocomplete="off" placeholder="friend@example.com" aria-label="Email to invite"><button class="btn primary fit" id="invSend">Send invitation</button></div>
       <p class="note" id="invMsg" role="status" style="margin:0"></p>
       <ul class="items" id="invList"></ul>
     </div>
-  </details>
+  </section>
 
-  <details class="panel" id="setupPanel">
-    <summary><h2>Setup</h2><span class="note">Dates, sections, and backups</span></summary>
-    <div class="ui" style="display:grid;gap:10px;margin-top:10px">
+  <section class="panel" id="setupPanel">
+    <div class="ui">
+      <details class="acc"><summary>School dates and days</summary><div>
       <label class="lbl">Planner name<input type="text" id="sName"></label>
       <label class="lbl">Child's first name or nickname (optional)<input type="text" id="sChild"></label>
       <div class="row">
@@ -283,27 +333,30 @@ input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8p
         <legend class="note">School days</legend>
         <div class="row" id="sDays"></div>
       </fieldset>
-      <h3 style="margin-top:8px">Sections, in the order you do them</h3>
-      <p class="note" style="margin:0">Change the names and the order to match your books. Optional sections do not show on a short day.</p>
+      <button class="btn primary fit" id="saveSetup" style="justify-self:start">Save</button>
+      </div></details>
+      <details class="acc"><summary>Subjects</summary><div>
+      <p class="note" style="margin:0">Change the names and order to match your books. Optional subjects hide on a short day.</p>
       <div id="secList"></div>
-      <button class="btn fit" id="secAdd" style="justify-self:start">Add a section</button>
-      <button class="btn primary fit" id="saveSetup" style="justify-self:start">Save setup</button>
-      <h3 style="margin-top:14px">Backups</h3>
+      <button class="btn fit" id="secAdd" style="justify-self:start">Add a subject</button>
+      <button class="btn primary fit" id="saveSecs" style="justify-self:start">Save</button>
+      </div></details>
+      <details class="acc"><summary>Backups</summary><div>
       <p class="note" style="margin:0" id="backupNote"></p>
       <div class="row">
         <button class="btn fit" id="exportBtn">Download backup</button>
         <label class="btn fit" style="cursor:pointer">Restore from backup<input type="file" id="importFile" accept="application/json,.json" hidden></label>
         <button class="btn danger fit" id="resetBtn">Start over</button>
       </div>
-      <div id="acctSection" hidden>
-        <h3 style="margin-top:14px">Your account</h3>
+      </div></details>
+      <details class="acc" id="acctSection" hidden><summary>Your account</summary><div>
         <p class="note" style="margin:0">This deletes your account, your planner, and your photo count. You cannot undo it.</p>
-        <div class="row" style="margin-top:6px"><button class="btn danger fit" id="deleteAcctBtn">Delete my account</button></div>
-      </div>
+        <div class="row"><button class="btn danger fit" id="deleteAcctBtn">Delete my account</button></div>
+      </div></details>
     </div>
-  </details>
-  <p class="foot">Only you can see your planner. <a href="privacy.html">Privacy</a></p>
+  </section>
 </div>
+<div class="sheet-bg" id="sheetBg" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-head"><h2 id="sheetTitle"></h2><button class="btn" id="sheetClose">Done</button></div><div class="sheet-body" id="sheetBody"></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -315,6 +368,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const uid=()=>Math.random().toString(36).slice(2,9);
 const DAYS=[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]];
 const OFF={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
+const plural=(n,w)=>n+" "+w+(n===1?"":"s");
 const LKEY="hs-day-planner-local-v1";
 
 const DEFAULT_SECTIONS=[
@@ -352,7 +406,7 @@ let S=blank();
 
 /* ----- storage: one private row per family in the database (row-level security), or this browser in try-it mode ----- */
 const Store={mode:null,sb:null,user:null,version:0,timer:null,inflight:false,dirty:false,
-  setStatus(t,warn){const el=$("saveState");el.textContent=t;el.dataset.s=warn?"warn":""},
+  setStatus(t,warn){const el=$("saveState");clearTimeout(this.st);el.dataset.s=warn?"warn":"";el.textContent=t;if(!warn&&/^Saved/.test(t))this.st=setTimeout(()=>{el.textContent=""},1500)},
   local(){try{localStorage.setItem(this.mode==="cloud"?LKEY+"-"+this.user.id:LKEY,JSON.stringify(S))}catch(e){}},
   async load(){
     if(this.mode==="demo"){let d=null;try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}S=d&&d.setup?d:blank();
@@ -413,65 +467,128 @@ function render(){
   const n=weekMondays().length;if(curW>n)curW=Math.max(1,n);
   const ds=daysOf(curW);if(!ds.find(d=>d[0]===cur))cur=ds[0]?ds[0][0]:"mon";
   try{localStorage.setItem(LKEY+"-pos",JSON.stringify({w:curW,d:cur}))}catch(e){}
-  $("title").textContent=S.setup.name||"Homeschool Day Planner";
-  const dt=dateOf(curW,cur);
-  $("subtitle").textContent=(S.setup.child?S.setup.child+" · ":"")+"Week "+curW+" of "+n+(dt?" · "+dt.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}):"");
+  $("title").textContent=(S.setup.child?S.setup.child+"'s ":"")+(S.setup.name||"Homeschool Day Planner");
+  const dt=dateOf(curW,cur),onToday=sameDay(dt,new Date());
+  $("dayTitle").textContent=dt?(onToday?"Today, ":"")+dt.toLocaleDateString(undefined,{weekday:onToday?undefined:"long",month:"long",day:"numeric"}):"";
+  $("subtitle").innerHTML=`Week ${curW} of ${n} · <button id="weekToggle" aria-expanded="${!$("weeks").hidden}">${$("weeks").hidden?"Change week":"Hide weeks"}</button>`;
   const any=hasAnyPlan(),wizOn=!S.setup.done&&!any;
-  $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;$("lede").hidden=wizOn;
-  for(const id of ["weeks","tabs","photoPanel","day","setupPanel","saveState"])$(id).hidden=wizOn;$("invitePanel").hidden=wizOn||!isAdminFlag;
-  for(const id of ["goalsPanel","notesPanel","missedPanel","shortBtn"])$(id).hidden=wizOn||!any;
+  $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;
+  for(const id of ["tabs","day","saveState","quick","noteBox"])$(id).hidden=wizOn;if(wizOn)$("weeks").hidden=true;
   if(wizOn)renderWizard();
   const exHere=Object.values(S.weeks).some(W=>JSON.stringify(W).includes('"ex":true'));
   $("welcome").innerHTML=wizOn?"":(exHere?`<div class="exbanner"><span>This is an <b>example week</b>. Select other days to see more.</span><button class="btn small" id="clearEx">Delete the example</button></div>`:"")+(any&&Store.mode==="demo"&&backupDue()?`<div class="banner"><b>Keep your planner safe.</b> Your planner is only in this browser. If you clear your browser data, you lose it. Download a backup each week.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-backup="1">Download a backup now</button></div></div>`:"")+(any?"":`<div class="banner"><b>Your week is empty.</b> To start, take photos of one week in your teacher's book.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-start="photos">Use photos</button><button class="btn fit" data-start="type">Type lessons</button><button class="btn fit" data-start="example">Show an example</button></div></div>`);
   renderWeeks();renderTabs();renderGoals();renderDay();renderPhotoWeeks();
-  const ta=$("notes");if(document.activeElement!==ta)ta.value=S.notes[curW+"-"+cur]||"";
-  $("editBtn").setAttribute("aria-pressed",editing);$("editBtn").classList.toggle("on",editing);$("editBtn").textContent=editing?"Done planning":"Plan this week";
-  const sh=!!S.short[curW+"-"+cur];$("shortBtn").setAttribute("aria-pressed",sh);$("shortBtn").classList.toggle("on",sh);
-  renderMissed();
+  renderMissed();renderQuick(any);renderNote(any);
 }
+function renderQuick(any){
+  if(!any){$("quick").innerHTML="";return}
+  const G=S.goals[curW]||[],met=G.filter(g=>g.s==="met").length,sh=!!S.short[curW+"-"+cur];
+  const hasOptional=S.sections.some(x=>x.optional&&itemsFor(curW,cur,x.id).length);
+  $("quick").innerHTML=`<button class="chip2" data-open="goals">${G.length?`Goals · ${met} of ${G.length} met`:"Week goals"}</button>`
+    +(missedN?`<button class="chip2 warn" data-open="missed">${missedN} to catch up</button>`:"")
+    +(hasOptional||sh?`<button class="chip2" id="shortChip" aria-pressed="${sh}">${sh?"Short day: on":"Short day"}</button>`:"");
+}
+function renderNote(any){const t=S.notes[curW+"-"+cur]||"";
+  $("noteBox").innerHTML=!any?"":t?`<div class="notecard"><div class="row" style="justify-content:space-between"><b>Note for today</b><button class="btn small fit" data-open="note">Edit</button></div><p>${esc(t)}</p></div>`:`<button class="notebtn" data-open="note">+ Write a note about today</button>`}
 function renderWeeks(){const now=todayPos();
   $("weeks").innerHTML=`<button class="todaybtn" data-today="1">Today</button>`+weekMondays().map((m,i)=>`<button data-w="${i+1}" aria-pressed="${i+1===curW}"${i+1===now.w?" data-now":""}>Wk ${i+1}<small>${fmt(m)}</small></button>`).join("");
   const sel=$("weeks").querySelector('[aria-pressed="true"]');if(sel)sel.scrollIntoView({block:"nearest",inline:"center"})}
 function renderTabs(){const now=new Date();
-  $("tabs").innerHTML=daysOf(curW).map(([k,l])=>{const d=dateOf(curW,k);return `<button data-d="${k}" aria-pressed="${k===cur}"${sameDay(d,now)?" data-today":""}>${l} ${d?d.getDate():""}</button>`}).join("")}
+  $("tabs").innerHTML=daysOf(curW).map(([k,l])=>{const d=dateOf(curW,k);return `<button data-d="${k}" aria-pressed="${k===cur}"${sameDay(d,now)?" data-today":""}>${l}<b>${d?d.getDate():""}</b></button>`}).join("")}
 function renderGoals(){const G=S.goals[curW]||[];
   $("goalsTitle").textContent="Week "+curW+" goals";
   const met=G.filter(g=>g.s==="met").length,marked=G.filter(g=>g.s).length;
   $("goalsCount").textContent=G.length?(marked?met+" of "+G.length+" met":G.length+" goal"+(G.length===1?"":"s")):"none yet";
-  $("goalList").innerHTML=G.map((g,i)=>`<li><div>${esc(g.t)}${editing?` <button class="btn small" data-gdel="${i}">Remove</button>`:""}</div><div class="gbtns">${[["met","Met"],["notyet","Not yet"],["carry","Carry over"]].map(([v,l])=>`<button type="button" data-g="${i}" data-v="${v}" aria-pressed="${g.s===v}">${l}</button>`).join("")}</div></li>`).join("")||`<li class="note" style="grid-template-columns:1fr">No goals for this week yet.</li>`;
-  const ks=daysOf(curW).map(d=>d[0]),p=$("goalsPanel");
-  if(p.dataset.k!==curW+cur){p.dataset.k=curW+cur;p.open=cur===ks[0]||cur===ks[ks.length-1]}
-  if(editing)p.open=true}
+  $("goalList").innerHTML=G.map((g,i)=>`<li><div>${esc(g.t)} <button class="addlink" data-gdel="${i}" aria-label="Remove goal">Remove</button></div><div class="gbtns">${[["met","Met"],["notyet","Not yet"],["carry","Carry over"]].map(([v,l])=>`<button type="button" data-g="${i}" data-v="${v}" aria-pressed="${g.s===v}">${l}</button>`).join("")}</div></li>`).join("")||`<li class="note" style="grid-template-columns:1fr">No goals for this week yet.</li>`;
+}
 function renderDay(){
   const sh=!!S.short[curW+"-"+cur];let n=0;const later=[];
   $("day").innerHTML=S.sections.map(sec=>{
     const items=itemsFor(curW,cur,sec.id);const hidden=sec.optional&&sh;
-    if(!editing&&!items.length){if(!hidden)later.push(sec);return ""}
+    if(!items.length){if(!hidden)later.push(sec);return ""}
     if(!hidden)n++;
     const lis=items.map(it=>{const id=ck(curW,cur,it.id);
-      if(editing&&editId===it.id)return `<li><div class="form" data-editform="${it.id}" data-sec="${sec.id}"><input type="text" data-f="t" value="${esc(it.t)}" aria-label="Item"><textarea data-f="n" aria-label="Notes or how-to steps">${esc(it.n||"")}</textarea><div class="row"><button class="btn primary fit" data-saveit="${it.id}" data-sec="${sec.id}">Save</button><button class="btn fit" data-cancelit="1">Cancel</button></div></div></li>`;
-      return `<li><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span>${it.every?`<span class="every">Every day this week</span>`:""}<span class="main">${esc(it.t)}</span>${it.n?`<span class="n">${esc(it.n)}</span>`:""}</span></label>${editing?`<div class="itemtools"><button class="btn small" data-editit="${it.id}">Edit</button><button class="btn small" data-delit="${it.id}" data-sec="${sec.id}">Remove</button></div>`:""}</li>`}).join("");
-    const empty=!items.length?`<div class="hint"><b>Ideas:</b> ${esc(sec.hint||"Add what you do in this part of the day.")}${sec.mine?`<details class="more" style="margin-top:6px"><summary>How another family uses this</summary><p style="margin:6px 0 0">${esc(sec.mine)}</p></details>`:""}</div>`:"";
-    const add=editing?`<div class="form addrow" data-addfor="${sec.id}"><input type="text" placeholder="Add to ${esc(sec.title)}" data-f="t" aria-label="New item for ${esc(sec.title)}"><textarea placeholder="Notes or how-to steps (optional)" data-f="n" style="min-height:52px" aria-label="Notes"></textarea><div class="row"><select data-f="scope" aria-label="When"><option value="day">Just ${dayName(cur)}</option><option value="every">Every day this week</option></select><button class="btn primary fit" data-add="${sec.id}">Add</button></div></div>`:"";
-    return `<section class="block ${esc(sec.color||"core")}${hidden?" short-hidden":""}"><header><h2><span class="stepn">${n}</span>${esc(sec.title)}</h2>${sec.tag?`<span class="tag">${esc(sec.tag)}</span>`:""}</header><div class="inner">${lis?`<ul class="items">${lis}</ul>`:""}${empty}${add}</div></section>`;
-  }).join("")+(!editing&&later.length&&hasAnyPlan()?`<div class="later">No items today for: ${later.map(x=>esc(x.title)).join(", ")}.<div class="row"><button class="btn small" data-start="type">Add an item</button></div></div>`:"")+(editing?`<div class="row" style="margin:6px 0"><button class="btn fit" id="copyNext">Copy this week to next week</button><span class="note">Copies every item (not checkmarks) into Week ${curW+1}.</span></div>`:"");
+      return `<li><div class="item"><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span><span class="main">${esc(it.t)}${it.every?`<span class="daily">daily</span>`:""}</span></span></label><button class="dots" data-item="${it.id}" data-sec="${sec.id}" aria-label="Change ${esc(it.t)}">⋯</button>${it.n?`<details class="steps"><summary>Steps</summary><span class="n">${esc(it.n)}</span></details>`:""}</div></li>`}).join("");
+    return `<section class="block ${esc(sec.color||"core")}${hidden?" short-hidden":""}"><header><h2><span class="stepn">${n}</span>${esc(sec.title)}</h2></header><div class="inner"><ul class="items">${lis}</ul><button class="addlink" data-addsec="${sec.id}">+ Add</button></div></section>`;
+  }).join("")+(later.length&&hasAnyPlan()?`<p class="nothing">Nothing planned today for ${later.map(x=>`<button data-addsec="${x.id}">${esc(x.title)}</button>`).join(", ")}.</p>`:"");
 }
 function renderMissed(){
   const now=new Date();now.setHours(0,0,0,0);const out=[],n=weekMondays().length;
   for(let w=1;w<=n;w++)for(const [dk,l] of daysOf(w)){const d=dateOf(w,dk);if(!d||d>=now)continue;
     if(S.setup.since&&iso(d)<S.setup.since)continue;
     S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).forEach(it=>{const id=ck(w,dk,it.id);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:sec.title,t:it.t})})})}
-  $("missedCount").textContent=out.length?out.length+" to catch up":"all caught up";
+  missedN=out.length;$("missedCount").textContent=out.length?out.length+" to catch up":"all caught up";
   $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)} · ${esc(x.sec)}</span></span></label></li>`).join("")||`<li class="note">Nothing missed.</li>`;
 }
 
+var missedN=0;
+/* ----- pop-up sheets: one form at a time, only when asked for ----- */
+const Sheet={node:null,onClose:null,
+  open(title,content,onClose){this.close(true);$("sheetTitle").textContent=title;const body=$("sheetBody");body.innerHTML="";
+    if(typeof content==="string")body.innerHTML=content;else{this.node=content;body.appendChild(content)}
+    this.onClose=onClose||null;$("sheetBg").hidden=false;document.body.style.overflow="hidden";
+    const f=body.querySelector("[autofocus]");if(f)setTimeout(()=>f.focus(),50)},
+  close(silent){if($("sheetBg").hidden)return;if(this.node){$("sheetStore").appendChild(this.node);this.node=null}
+    $("sheetBg").hidden=true;document.body.style.overflow="";const cb=this.onClose;this.onClose=null;if(cb&&!silent)cb();if(!silent)render()}};
+$("sheetClose").addEventListener("click",()=>Sheet.close());
+$("sheetBg").addEventListener("click",e=>{if(e.target===$("sheetBg"))Sheet.close()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheetBg").hidden)Sheet.close()});
+function openPanel(id){
+  if(id==="goals"){renderGoals();$("goalAddRow").hidden=true;$("goalAddOpen").hidden=false;Sheet.open("Week "+curW+" goals",$("goalsPanel"));return}
+  if(id==="missed"){renderMissed();Sheet.open("Catch up",$("missedPanel"));return}
+  if(id==="photos"){Sheet.open("Fill from photos",$("photoPanel"));openPhotos();return}
+  if(id==="setup"){fillSetup();Sheet.open("Settings",$("setupPanel"));return}
+  if(id==="invite"){loadInvites();Sheet.open("Invite families",$("invitePanel"));return}
+  if(id==="note"){Sheet.open("Note for "+dayName(cur)+" "+(dateOf(curW,cur)?dateOf(curW,cur).getDate():""),`<textarea id="noteText" style="min-height:160px" placeholder="What went well? What should you do again?" aria-label="Note for today" autofocus>${esc(S.notes[curW+"-"+cur]||"")}</textarea><p class="note" style="margin:0">Saves as you type.</p>`);
+    $("noteText").addEventListener("input",e=>{const k=curW+"-"+cur;if(e.target.value.trim())S.notes[k]=e.target.value;else delete S.notes[k];save(curW)});return}
+  if(id==="menu"){const ld=dayName(cur);
+    Sheet.open("Menu",`<ul class="menu">
+      <li><button data-open="photos">Fill from photos<small>Claude reads your teacher's book and plans the week</small></button></li>
+      <li><button data-open="goals">Week goals<small>What your child should be able to do by the end of the week</small></button></li>
+      ${missedN?`<li><button data-open="missed">Catch up<small>${missedN} unchecked from past days</small></button></li>`:""}
+      <li><button id="copyNext">Copy this week to next week<small>Copies every item, not the checkmarks</small></button></li>
+      <li><button data-open="setup">Settings<small>School dates, subjects, backups</small></button></li>
+      ${isAdminFlag?`<li><button data-open="invite">Invite families<small>Send someone an invitation by email</small></button></li>`:""}
+      <li><button id="menuSignOut">${Store.mode==="cloud"?"Sign out":"Exit"}<small>${esc(Store.mode==="cloud"?(Store.user.email||""):"Trying it out")}</small></button></li></ul>`);return}
+}
+function openAdd(secId){const sec=S.sections.find(x=>x.id===secId)||S.sections[0];if(!sec)return;
+  Sheet.open("Add to "+sec.title,`<input type="text" id="addT" placeholder="What to do (example: Lesson 12)" aria-label="What to do" autofocus>
+    <button class="addlink" id="addStepsOpen">+ Add steps</button><textarea id="addN" hidden placeholder="Steps, one per line" aria-label="Steps"></textarea>
+    <div class="seg" role="group" aria-label="When"><button data-when="day" aria-pressed="true">Just ${dateOf(curW,cur)?dateOf(curW,cur).toLocaleDateString(undefined,{weekday:"long"}):dayName(cur)}</button><button data-when="every" aria-pressed="false">Every day this week</button></div>
+    <button class="btn primary" id="addSave" data-sec="${sec.id}">Add</button>`)}
+function openItem(id,secId){const f=findItem(id);if(!f)return;const it=f.L[f.i];
+  Sheet.open("Change item",`<input type="text" id="itT" value="${esc(it.t)}" aria-label="What to do">
+    <textarea id="itN" placeholder="Steps, one per line" aria-label="Steps">${esc(it.n||"")}</textarea>
+    ${f.every?`<p class="note" style="margin:0">This item is on every day this week.</p>`:""}
+    <div class="row"><button class="btn primary fit" id="itSave" data-id="${id}">Save</button><button class="btn danger fit" id="itDel" data-id="${id}">Remove</button></div>`)}
+$("sheetBody").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.id==="addStepsOpen"){b.hidden=true;$("addN").hidden=false;$("addN").focus();return}
+  if(b.dataset.when){b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));return}
+  if(b.id==="addSave"){const t=$("addT").value.trim();if(!t){$("addT").focus();return}
+    const every=$("sheetBody").querySelector('[data-when="every"]').getAttribute("aria-pressed")==="true",W=wk(curW),sec=b.dataset.sec,it={id:uid(),t,n:$("addN").value.trim()};
+    if(every)(W.every[sec]=W.every[sec]||[]).push(it);else{W.days[cur]=W.days[cur]||{};(W.days[cur][sec]=W.days[cur][sec]||[]).push(it)}
+    save(curW);Sheet.close();toast("Added");return}
+  if(b.id==="itSave"){const f=findItem(b.dataset.id);if(f){const t=$("itT").value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=$("itN").value.trim();save(curW)}Sheet.close();toast("Saved");return}
+  if(b.id==="itDel"){const f=findItem(b.dataset.id);if(!f)return;if(!confirmInline(b,f.every?"This removes it from every day this week.":"This removes the item.","Tap to remove"))return;f.L.splice(f.i,1);save(curW);Sheet.close();toast("Removed");return}
+  if(b.id==="copyNext"){if(curW>=weekMondays().length){toast("This is the last week");return}
+    const src=wk(curW),dst=wk(curW+1);const cp=L=>L.filter(x=>!x.ex).map(x=>({id:uid(),t:x.t,n:x.n}));
+    for(const sec in src.every)dst.every[sec]=[...(dst.every[sec]||[]),...cp(src.every[sec])];
+    for(const dk in src.days){dst.days[dk]=dst.days[dk]||{};for(const sec in src.days[dk])dst.days[dk][sec]=[...(dst.days[dk][sec]||[]),...cp(src.days[dk][sec])]}
+    save(curW+1);Sheet.close();toast("Copied into Week "+(curW+1));return}
+  if(b.id==="menuSignOut"){Sheet.close(true);$("signOutBtn").click();return}
+});
+$("sheetBody").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addT"){e.preventDefault();$("addSave").click()}});
+document.addEventListener("click",e=>{const o=e.target.closest("[data-open]");if(o){e.preventDefault();openPanel(o.dataset.open);return}
+  const a=e.target.closest("[data-addsec]");if(a){openAdd(a.dataset.addsec);return}
+  const d=e.target.closest("[data-item]");if(d){openItem(d.dataset.item,d.dataset.sec);return}
+  if(e.target.id==="weekToggle"){$("weeks").hidden=!$("weeks").hidden;render();return}
+  if(e.target.id==="shortChip"){const k=curW+"-"+cur;if(S.short[k])delete S.short[k];else S.short[k]=true;save(curW);render();return}});
+$("menuBtn").addEventListener("click",()=>openPanel("menu"));
+$("goalAddOpen").addEventListener("click",()=>{$("goalAddOpen").hidden=true;$("goalAddRow").hidden=false;$("goalInput").focus()});
 /* ----- events ----- */
 $("weeks").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.today){const p=todayPos();curW=p.w;cur=p.d}else curW=+b.dataset.w;editId=null;render()});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(!b)return;cur=b.dataset.d;editId=null;render()});
 document.addEventListener("change",e=>{const c=e.target.closest("input[data-ck]");if(!c)return;const k=c.dataset.ck;if(c.checked)S.checks[k]=true;else delete S.checks[k];save(+k.split("-")[0]);if(c.closest("#missedList"))render();else renderMissed()});
-$("editBtn").addEventListener("click",()=>{editing=!editing;editId=null;render()});
-$("shortBtn").addEventListener("click",()=>{const k=curW+"-"+cur;if(S.short[k])delete S.short[k];else S.short[k]=true;save(curW);render()});
-$("notes").addEventListener("input",e=>{const k=curW+"-"+cur;if(e.target.value.trim())S.notes[k]=e.target.value;else delete S.notes[k];save(curW)});
 $("goalAddBtn").addEventListener("click",()=>{const t=$("goalInput").value.trim();if(!t)return;(S.goals[curW]=S.goals[curW]||[]).push({t});$("goalInput").value="";save(curW);renderGoals()});
 $("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("goalAddBtn").click()});
 $("goalList").addEventListener("click",e=>{const G=S.goals[curW]||[];const b=e.target.closest("button");if(!b)return;
@@ -480,23 +597,6 @@ $("goalList").addEventListener("click",e=>{const G=S.goals[curW]||[];const b=e.t
 function confirmInline(b,msg,label){if(b.dataset.armed)return true;b.dataset.armed="1";const old=b.textContent;b.textContent=label||"Tap to confirm";toast(msg);setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=old}},4000);return false}
 function findItem(id){const W=wk(curW);for(const sec in W.every){const L=W.every[sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:true}}
   for(const sec in (W.days[cur]||{})){const L=W.days[cur][sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:false}}return null}
-$("day").addEventListener("click",e=>{
-  const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.add){const box=b.closest("[data-addfor]");const tEl=box.querySelector('[data-f="t"]');const t=tEl.value.trim();if(!t){tEl.focus();return}
-    const n=box.querySelector('[data-f="n"]').value.trim(),scope=box.querySelector('[data-f="scope"]').value,W=wk(curW),sec=b.dataset.add,it={id:uid(),t,n};
-    if(scope==="every")(W.every[sec]=W.every[sec]||[]).push(it);else{W.days[cur]=W.days[cur]||{};(W.days[cur][sec]=W.days[cur][sec]||[]).push(it)}
-    save(curW);renderDay();const nb=$("day").querySelector(`[data-addfor="${sec}"] [data-f="t"]`);if(nb)nb.focus();toast("Added");return}
-  if(b.dataset.editit){editId=b.dataset.editit;renderDay();return}
-  if(b.dataset.cancelit){editId=null;renderDay();return}
-  if(b.dataset.saveit){const f=findItem(b.dataset.saveit);const box=b.closest("[data-editform]");if(f){const t=box.querySelector('[data-f="t"]').value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=box.querySelector('[data-f="n"]').value.trim();save(curW)}editId=null;renderDay();return}
-  if(b.dataset.delit){const f=findItem(b.dataset.delit);if(!f)return;if(f.every&&!confirmInline(b,"This removes it from every day this week.","Tap to remove"))return;f.L.splice(f.i,1);save(curW);renderDay();renderMissed();return}
-  if(b.id==="copyNext"){if(curW>=weekMondays().length){toast("This is the last week");return}
-    const src=wk(curW),dst=wk(curW+1);const cp=L=>L.map(x=>({id:uid(),t:x.t,n:x.n}));
-    for(const sec in src.every)dst.every[sec]=[...(dst.every[sec]||[]),...cp(src.every[sec])];
-    for(const dk in src.days){dst.days[dk]=dst.days[dk]||{};for(const sec in src.days[dk])dst.days[dk][sec]=[...(dst.days[dk][sec]||[]),...cp(src.days[dk][sec])]}
-    save(curW+1);toast("Copied into Week "+(curW+1))}
-});
-
 /* ----- setup ----- */
 function fillSetup(){
   $("sName").value=S.setup.name||"";$("sChild").value=S.setup.child||"";$("sStart").value=S.setup.start||"";$("sWeeks").value=S.setup.weeks;$("sBreaks").value=(S.setup.breaks||[]).join(", ");
@@ -520,8 +620,7 @@ $("saveSetup").addEventListener("click",()=>{readSections();
   const days=[...$("sDays").querySelectorAll("input:checked")].map(x=>x.value);if(!days.length){toast("Choose at least one school day");return}
   S.setup={...S.setup,name:$("sName").value.trim()||"Homeschool Day Planner",child:$("sChild").value.trim(),start:iso(st),weeks,breaks,days};
   save("meta");render();toast(bad.length?"Saved. Skipped dates that weren't YYYY-MM-DD: "+bad.join(", "):"Setup saved")});
-$("setupBtn").addEventListener("click",()=>{$("setupPanel").open=true;$("setupPanel").scrollIntoView({behavior:"smooth"})});
-$("setupPanel").addEventListener("toggle",()=>{if($("setupPanel").open)fillSetup()});
+$("saveSecs").addEventListener("click",()=>{readSections();save("meta");render();toast("Subjects saved")});
 
 /* ----- backup ----- */
 function lastBackup(){try{return +localStorage.getItem(LKEY+"-lastbackup")||0}catch(e){return 0}}
@@ -541,10 +640,11 @@ $("resetBtn").addEventListener("click",e=>{if(!confirmInline(e.target,"This eras
 /* ----- fill from photos ----- */
 let sampleNS=null,limits=null,phAbort=null,proposal=null;
 function renderPhotoWeeks(){const sel=$("phWeek"),v=sel.value||String(curW);sel.innerHTML=weekMondays().map((m,i)=>`<option value="${i+1}">Week ${i+1} (${fmt(m)})</option>`).join("");sel.value=String(Math.min(+v||curW,weekMondays().length))}
-$("photoPanel").addEventListener("toggle",async()=>{if(!$("photoPanel").open)return;$("phWeek").value=String(curW);
+$("phFiles").addEventListener("change",()=>{const n=$("phFiles").files.length;$("phCount").textContent=n?n+" photo"+(n===1?"":"s")+" ready.":"";$("phGo").hidden=!n;$("phGo").classList.toggle("primary",!!n)});
+function openPhotos(){$("phWeek").value=String(curW);
   const ok=Store.mode==="cloud";limits=ok?{images:{maxCount:5,maxInputBytes:30e6,mediaTypes:["image/jpeg","image/png","image/webp","image/gif"]}}:false;
   $("photoForm").hidden=!ok;const u=$("photoUnavailable");u.hidden=ok;
-  if(!ok)u.textContent="Photos need an account. You can type your lessons with Plan this week."});
+  if(!ok)u.textContent="Photos need an account. You can still add lessons by hand with the + Add links."}
 /* Photos are shrunk in the browser, then sent to the site's read-photos function, which holds the AI key and the page limit. */
 async function shrink(file){
   const url=URL.createObjectURL(file);
@@ -582,10 +682,10 @@ $("phGo").addEventListener("click",async()=>{
       (Array.isArray(res&&res.goals)?res.goals:[]).forEach(g=>all.goals.push({week:mode==="one"?1:Math.max(1,parseInt(g.week,10)||1),text:String(g.text||g||"")}));
       (Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));
     }
-    $("phMsg").textContent=all.items.length?`Claude found ${all.items.length} items. Check them below.`:"Claude did not find lessons in these photos.";
+    $("phMsg").textContent=all.items.length?`Claude found ${plural(all.items.length,"item")}. Check ${all.items.length===1?"it":"them"} below.`:"Claude did not find lessons in these photos.";
   }catch(e){
     const code=e&&e.code;
-    const msg={limit:e&&e.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can type your lessons with Plan this week.",upstream:e&&e.message,cancelled:"Stopped.",not_granted:"This page isn't allowed to use Claude. Allow it when asked, then try again.",sampling_disabled:"Claude isn't available for this account.",images_unavailable:"This view can't send photos to Claude.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",rate_limited:"You've reached a usage limit for now. Try again later.",session_expired:"Please sign in to Claude again, then retry.",refused:"Claude couldn't help with those pages. Try different photos.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once.",empty_completion:"Claude didn't return anything. Try fewer or clearer photos.",prompt_too_large:"That's too much at once. Try fewer photos or a shorter note."}[code]||"Something went wrong reading the photos. Try again.";
+    const msg={limit:e&&e.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can still add lessons by hand with the + Add links.",upstream:e&&e.message,cancelled:"Stopped.",not_granted:"This page isn't allowed to use Claude. Allow it when asked, then try again.",sampling_disabled:"Claude isn't available for this account.",images_unavailable:"This view can't send photos to Claude.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",rate_limited:"You've reached a usage limit for now. Try again later.",session_expired:"Please sign in to Claude again, then retry.",refused:"Claude couldn't help with those pages. Try different photos.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once.",empty_completion:"Claude didn't return anything. Try fewer or clearer photos.",prompt_too_large:"That's too much at once. Try fewer photos or a shorter note."}[code]||"Something went wrong reading the photos. Try again.";
     $("phMsg").textContent=(all.items.length?"Claude stopped before the end. ":"")+msg;
   }finally{$("phGo").disabled=false;$("phStop").hidden=true;phAbort=null}
   if(all.items.length||all.goals.length){proposal={start:startW,...all};showProposal()}
@@ -600,17 +700,17 @@ function showProposal(){
   $("phWarn").hidden=!P.warnings.length;$("phWarn").innerHTML=P.warnings.map(esc).join("<br>");
   $("phList").innerHTML=P.items.map((x,i)=>`<li data-i="${i}" class="${x.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${x.on?"checked":""}> Add</label><select data-p="realWeek" aria-label="Week">${wkOpts(x.realWeek)}</select><select data-p="day" aria-label="Day">${dayOpts(x.day)}</select><select data-p="section" aria-label="Section">${secOpts(x.section)}</select></div><input type="text" data-p="title" value="${esc(x.title)}" aria-label="Item"><textarea data-p="notes" aria-label="How-to steps">${esc(x.notes||"")}</textarea></li>`).join("")
     +P.goals.map((g,i)=>`<li data-g="${i}" class="${g.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${g.on?"checked":""}> Add goal</label><select data-p="realWeek" aria-label="Week">${wkOpts(g.realWeek)}</select></div><input type="text" data-p="text" value="${esc(g.text)}" aria-label="Goal"></li>`).join("");
-  $("phResults").hidden=false;$("phAdd").textContent=`Add ${P.items.filter(x=>x.on).length} items and ${P.goals.filter(g=>g.on).length} goals`;
+  $("phResults").hidden=false;$("phAdd").textContent=`Add ${plural(P.items.filter(x=>x.on).length,"item")}`+(P.goals.length?` and ${plural(P.goals.filter(g=>g.on).length,"goal")}`:"");
 }
 $("phList").addEventListener("input",e=>{const f=e.target.closest("[data-p]");if(!f||!proposal)return;const li=f.closest("li");
   const obj=li.dataset.g!=null?proposal.goals[+li.dataset.g]:proposal.items[+li.dataset.i];const k=f.dataset.p;
-  obj[k]=f.type==="checkbox"?f.checked:(k==="realWeek"?+f.value:f.value);if(k==="on"){li.classList.toggle("off",!f.checked);$("phAdd").textContent=`Add ${proposal.items.filter(x=>x.on).length} items and ${proposal.goals.filter(g=>g.on).length} goals`}});
+  obj[k]=f.type==="checkbox"?f.checked:(k==="realWeek"?+f.value:f.value);if(k==="on"){li.classList.toggle("off",!f.checked);$("phAdd").textContent=`Add ${plural(proposal.items.filter(x=>x.on).length,"item")}`+(proposal.goals.length?` and ${plural(proposal.goals.filter(g=>g.on).length,"goal")}`:"")}});
 $("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new Set();let ni=0,ng=0;
   proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000)};
     if(x.day==="every")(W.every[x.section]=W.every[x.section]||[]).push(it);else{W.days[x.day]=W.days[x.day]||{};(W.days[x.day][x.section]=W.days[x.day][x.section]||[]).push(it)}touched.add(x.realWeek);ni++});
   proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300)});touched.add(g.realWeek);ng++});
-  touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;$("phFiles").value="";$("phMsg").textContent="";
-  if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}render();toast(`Added ${ni} items and ${ng} goals`)});
+  touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;$("phFiles").value="";$("phMsg").textContent="";$("phCount").textContent="";$("phGo").hidden=true;
+  if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}Sheet.close();toast(ng?`Added ${plural(ni,"item")} and ${plural(ng,"goal")}`:`Added ${plural(ni,"item")}`)});
 $("phDiscard").addEventListener("click",()=>{proposal=null;$("phResults").hidden=true;$("phMsg").textContent=""});
 
 /* ----- first-visit welcome ----- */
@@ -651,8 +751,8 @@ $("wizard").addEventListener("click",e=>{const b=e.target.closest("button");if(!
     const p=todayPos();curW=p.w;cur=p.d;startWith(b.dataset.wizgo)}});
 function startWith(kind){
   if(kind==="example"){loadExample(curW);render();toast("Example week added");return}
-  if(kind==="type"){editing=true;render();const f=$("day").querySelector("[data-addfor] input");if(f)f.focus();return}
-  if(kind==="photos"){render();$("photoPanel").open=true;$("photoPanel").scrollIntoView({behavior:"smooth",block:"start"})}}
+  if(kind==="type"){render();openAdd((S.sections[0]||{}).id);return}
+  if(kind==="photos"){render();openPanel("photos")}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-start]");if(b){if(!S.setup.done){S.setup.done=true;S.setup.since=iso(new Date())}save("meta");startWith(b.dataset.start);return}
   if(e.target.id==="clearEx"){const touched=[];for(const w in S.weeks){const W=S.weeks[w],strip=L=>L.filter(x=>!x.ex);
       for(const sec in W.every)W.every[sec]=strip(W.every[sec]);for(const dk in W.days)for(const sec in W.days[dk])W.days[dk][sec]=strip(W.days[dk][sec]);touched.push(+w)}
@@ -686,7 +786,7 @@ async function loadInvites(){try{const {people}=await callInvite({action:"list"}
   $("inviteCount").textContent=people.length+" invited, "+n+" signed in";
   $("invList").innerHTML=people.map(x=>`<li style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-family:var(--sans);font-size:.9rem"><span>${esc(x.email)}</span><span class="note">${x.joined?"Signed in":"Invited "+fmt(new Date(x.invited))}</span></li>`).join("")}catch(e){$("invMsg").textContent=e.message}}
 var isAdminFlag=false;
-async function checkAdmin(){isAdminFlag=false;$("invitePanel").hidden=true;if(Store.mode!=="cloud")return;try{const {isAdmin}=await callInvite({action:"check"});isAdminFlag=!!isAdmin;if(isAdminFlag){render();loadInvites()}}catch(e){}}
+async function checkAdmin(){isAdminFlag=false;if(Store.mode!=="cloud")return;try{const {isAdmin}=await callInvite({action:"check"});isAdminFlag=!!isAdmin}catch(e){}}
 $("invSend").addEventListener("click",async()=>{const email=$("invEmail").value.trim();if(!email){$("invEmail").focus();return}
   $("invSend").disabled=true;$("invMsg").textContent="Sending…";
   try{await callInvite({action:"invite",email,redirectTo:location.origin+location.pathname});$("invMsg").textContent="Invitation sent to "+email+".";$("invEmail").value="";loadInvites()}

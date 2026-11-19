@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Homeschool Day Planner</title>
+<meta name="description" content="A homeschool planner that walks you through the day. Take photos of your teacher's book and it plans your week.">
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<style>
+/* Layout: one reading column; the day reads top to bottom as numbered, color-keyed sections. */
+:root{
+  --paper:#f8f6f1;--card:#ffffff;--ink:#27261f;--muted:#6b675c;--line:#e3ddd0;
+  --morn:#a85d1c;--morn-soft:#f5e8d6;--core:#2d6656;--core-soft:#dfeee8;--read:#574788;--read-soft:#e9e5f4;--extra:#85582b;--extra-soft:#f0e6d9;
+  --focus:#2d6656;--danger:#a3261c;
+  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#1b1a17;--card:#24231f;--ink:#ece8de;--muted:#a7a195;--line:#3a3832;
+  --morn:#e09a58;--morn-soft:#3a2c1d;--core:#71bea5;--core-soft:#1e3530;--read:#ab9ddf;--read-soft:#2c2840;--extra:#cfa06e;--extra-soft:#352a1e;--focus:#71bea5;--danger:#f08a80;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1b1a17;--card:#24231f;--ink:#ece8de;--muted:#a7a195;--line:#3a3832;
+  --morn:#e09a58;--morn-soft:#3a2c1d;--core:#71bea5;--core-soft:#1e3530;--read:#ab9ddf;--read-soft:#2c2840;--extra:#cfa06e;--extra-soft:#352a1e;--focus:#71bea5;--danger:#f08a80;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font:16px/1.5 var(--serif);-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea,.ui,.tag,.note,.hint,.weeks,.tabs{font-family:var(--sans)}
+h1{font-size:1.65rem;margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h2{margin:0;font-size:1.1rem;text-wrap:balance}
+h3{margin:0;font-size:1rem}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.top .sub{color:var(--muted);font-size:.9rem;margin-top:2px;font-family:var(--sans)}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font-size:.85rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px}
+.btn.primary{background:var(--core);border-color:var(--core);color:var(--paper)}
+.btn.on{background:var(--morn);border-color:var(--morn);color:var(--paper)}
+.btn.small{font-size:.75rem;padding:3px 9px}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.55;cursor:default}
+.lede{color:var(--muted);font-size:.95rem;margin:10px 0 0}
+.status{font-family:var(--sans);font-size:.8rem;color:var(--muted);margin-top:8px}
+.status[data-s="warn"]{color:var(--morn)}
+.weeks{display:flex;gap:6px;overflow-x:auto;padding:12px 0 6px;margin-top:8px;scrollbar-width:thin}
+.weeks button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:5px 10px;font-size:.8rem;line-height:1.25;text-align:left}
+.weeks button small{display:block;color:var(--muted);font-size:.7rem}
+.weeks button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.weeks button[aria-pressed="true"] small{color:var(--paper);opacity:.75}
+.weeks button[data-now]{box-shadow:inset 0 -3px 0 var(--morn)}
+.weeks .todaybtn{background:var(--morn);color:var(--paper);border-color:var(--morn);font-weight:600}
+.tabs{display:flex;gap:6px;margin:8px 0 14px;flex-wrap:wrap}
+.tabs button{flex:1 1 0;min-width:60px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:7px 4px;font-size:.85rem}
+.tabs button[aria-pressed="true"]{background:var(--core);color:var(--paper);border-color:var(--core)}
+.tabs button[data-today]{box-shadow:inset 0 -3px 0 var(--morn)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0}
+.panel summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.panel summary::-webkit-details-marker{display:none}
+.panel summary h2::before{content:"▸ ";color:var(--muted);font-size:.8em}
+.panel[open] summary h2::before{content:"▾ "}
+.panel.photo{border-color:var(--core)}
+.note{color:var(--muted);font-size:.85rem}
+.hint{font-size:.85rem;color:var(--muted);background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+.hint b{color:var(--ink);font-weight:600}
+.banner{background:var(--morn-soft);border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.92rem;font-family:var(--sans)}
+.banner b{color:var(--morn)}
+.block{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;margin:12px 0;overflow:hidden}
+.block.morning{--c:var(--morn);--soft:var(--morn-soft)}.block.core{--c:var(--core);--soft:var(--core-soft)}.block.read{--c:var(--read);--soft:var(--read-soft)}.block.extra{--c:var(--extra);--soft:var(--extra-soft)}
+.block header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--soft);flex-wrap:wrap}
+.block header h2{color:var(--c);display:flex;align-items:center;gap:8px}
+.stepn{display:inline-grid;place-items:center;width:1.4em;height:1.4em;border-radius:50%;background:var(--c);color:var(--paper);font-size:.75rem;font-weight:700;flex:none;font-family:var(--sans)}
+.tag{font-size:.75rem;color:var(--muted)}
+.inner{padding:4px 14px 10px}
+.items{list-style:none;margin:0;padding:0}
+.items li{border-top:1px solid var(--line);padding:9px 0}
+.items li:first-child{border-top:0}
+.task{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;cursor:pointer}
+.task input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--c)}
+.task .main{display:block}
+.task .every{display:block;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-family:var(--sans);font-weight:600}
+.task .n{display:block;font-size:.88rem;color:var(--muted);white-space:pre-wrap;font-family:var(--sans);margin-top:2px}
+.task input:checked~span .main{text-decoration:line-through;color:var(--muted)}
+.itemtools{display:flex;gap:6px;margin:6px 0 0 34px;flex-wrap:wrap}
+.form{display:grid;gap:6px;margin-top:8px}
+.addrow{border-top:1px dashed var(--line);padding-top:8px}
+input[type=text],input[type=date],input[type=number],textarea,select{font-size:.95rem;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--paper);color:var(--ink);width:100%}
+textarea{min-height:64px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1 1 140px;min-width:0}
+.row>.fit{flex:0 0 auto}
+label.lbl{display:grid;gap:4px;font-size:.85rem;font-family:var(--sans)}
+.glist{list-style:none;margin:8px 0 0;padding:0}
+.glist li{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.glist li:first-child{border-top:0}
+.gbtns{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.gbtns button{font-size:.75rem;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:3px 9px}
+.gbtns button[aria-pressed="true"][data-v="met"]{background:var(--core);border-color:var(--core);color:var(--paper)}
+.gbtns button[aria-pressed="true"][data-v="notyet"]{background:var(--morn);border-color:var(--morn);color:var(--paper)}
+.gbtns button[aria-pressed="true"][data-v="carry"]{background:var(--extra);border-color:var(--extra);color:var(--paper)}
+.prev{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.prev li{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:6px;background:var(--paper)}
+.prev li.off{opacity:.55}
+.prev .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.prev .head select{width:auto;flex:1 1 110px;font-size:.85rem;padding:5px 7px}
+.prev .head label{display:flex;gap:6px;align-items:center;font-size:.85rem;font-family:var(--sans);flex:0 0 auto}
+.secedit{display:grid;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
+.secedit:first-of-type{border-top:0}
+.short-hidden{display:none!important}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:999px;font-size:.85rem;opacity:0;transition:opacity .2s;pointer-events:none;font-family:var(--sans);max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1}
+.wiz{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 20px;margin:16px 0;display:grid;gap:14px}
+.wiz .stepcount{font-family:var(--sans);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.wiz h2{font-size:1.35rem}
+.wiz p{margin:0;color:var(--muted);font-family:var(--sans);font-size:.95rem}
+.chips{display:grid;gap:8px}
+.chip{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper);font-family:var(--sans);font-size:.95rem;cursor:pointer}
+.chip input{width:18px;height:18px;margin-top:2px;accent-color:var(--core)}
+.chip small{display:block;color:var(--muted);font-size:.8rem}
+.choices{display:grid;gap:10px}
+.choice{display:grid;gap:2px;text-align:left;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:1rem}
+.choice b{font-size:1.02rem}
+.choice span{color:var(--muted);font-size:.88rem}
+.choice:hover{border-color:var(--core)}
+.choice.main{border-color:var(--core);background:var(--core-soft)}
+.wiznav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.steps3{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.steps3 li{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;font-family:var(--sans);font-size:.85rem;display:grid;gap:2px}
+.steps3 li b{color:var(--core);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase}
+.later{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;margin:12px 0;font-family:var(--sans);font-size:.9rem;color:var(--muted)}
+.later .row{margin-top:8px}
+.later button{flex:0 0 auto}
+.exbanner{background:var(--read-soft);border-radius:12px;padding:10px 14px;margin:12px 0;font-family:var(--sans);font-size:.9rem;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.more summary{cursor:pointer;font-family:var(--sans);font-size:.85rem;color:var(--muted)}
+@media (max-width:520px){.steps3{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media (max-width:520px){.glist li{grid-template-columns:1fr}.gbtns{justify-content:flex-start}h1{font-size:1.4rem}}
+.authwrap{max-width:520px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hero h1{font-size:2rem;line-height:1.2}
+.hero p{color:var(--muted);font-size:1.05rem;font-family:var(--sans)}
+.feat{list-style:none;padding:0;margin:18px 0;display:grid;gap:8px;font-family:var(--sans)}
+.feat li{padding-left:22px;position:relative}
+.feat li::before{content:"✓";position:absolute;left:0;color:var(--core);font-weight:700}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);font-family:var(--sans)}
+.foot{text-align:center;font-size:.8rem;color:var(--muted);margin:30px 0 0;font-family:var(--sans)}
+.foot a{color:inherit}
+input[type=email]{font-size:.95rem;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--paper);color:var(--ink);width:100%}
+</style>
+</head>
+<body>
+<div class="authwrap" id="authView" hidden>
+  <div class="hero">
+    <h1>A homeschool planner that walks you through the day</h1>
+    <p>Take photos of your teacher's book. The planner puts each lesson in your day and writes the steps. You check it and add it.</p>
+  </div>
+  <ul class="feat">
+    <li>Your day in order, one section at a time</li>
+    <li>Steps for each lesson, so the teacher's book can stay closed</li>
+    <li>Weekly goals, missed items, and a short-day mode</li>
+    <li>Works on a phone, a tablet, or a computer</li>
+  </ul>
+  <section class="panel">
+    <h2>Sign in</h2>
+    <p class="note" style="margin:4px 0 10px">This planner is by invitation right now. Type the email that got the invitation. We send you a sign-in link. You do not need a password.</p>
+    <form id="authForm" class="row">
+      <input type="email" id="authEmail" required autocomplete="email" placeholder="you@example.com" aria-label="Email address">
+      <button class="btn primary fit" type="submit">Email me a link</button>
+    </form>
+    <p class="note" id="authMsg" role="status" style="margin:8px 0 0"></p>
+  </section>
+  <p class="note" style="text-align:center">No invitation yet? Ask the person who told you about this planner.</p>
+  <p class="foot"><a href="privacy.html">Privacy</a></p>
+</div>
+<div class="acct" id="acctBar" hidden><span id="acctWho"></span><button class="btn small" id="signOutBtn">Sign out</button></div>
+
+<div class="wrap" id="appView" hidden>
+  <div class="top" id="topbar">
+    <div>
+      <h1 id="title">Homeschool Day Planner</h1>
+      <div class="sub" id="subtitle"></div>
+    </div>
+    <div class="tools">
+      <button class="btn" id="editBtn" aria-pressed="false">Plan this week</button>
+      <button class="btn" id="shortBtn" aria-pressed="false" title="Hide the optional sections for today">Short day</button>
+      <button class="btn" id="setupBtn">Setup</button>
+    </div>
+  </div>
+  <p class="lede" id="lede">Do each section in order. Check each item when you finish it.</p>
+  <div class="status" id="saveState" role="status">Loading your planner…</div>
+
+  <div id="wizard" hidden></div>
+  <div id="welcome"></div>
+  <div class="weeks" id="weeks" role="group" aria-label="Weeks"></div>
+  <div class="tabs" id="tabs" role="group" aria-label="Days"></div>
+
+  <details class="panel photo" id="photoPanel">
+    <summary><h2>Fill from photos</h2><span class="note">Claude reads your book and makes your week</span></summary>
+    <div class="ui" style="display:grid;gap:10px;margin-top:10px">
+      <ol class="steps3">
+        <li><b>1. Photos</b>Take photos of one week of lessons in your teacher's book.</li>
+        <li><b>2. Claude reads</b>Claude puts each lesson in your day. It writes the steps.</li>
+        <li><b>3. You check</b>Read the list and fix errors. Then add it to your planner.</li>
+      </ol>
+      <div id="photoUnavailable" class="hint" hidden></div>
+      <div id="photoForm" style="display:grid;gap:10px">
+        <label class="lbl">Photos
+          <input type="file" id="phFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+        </label>
+        <details class="more"><summary>More options</summary><div style="display:grid;gap:10px;margin-top:10px">
+        <div class="row">
+          <label class="lbl">What the photos show
+            <select id="phMode"><option value="one">One week of lessons</option><option value="many">More than one week of lessons</option></select>
+          </label>
+          <label class="lbl">Put the lessons in
+            <select id="phWeek"></select>
+          </label>
+        </div>
+        <label class="lbl">Tell Claude more (optional)
+          <textarea id="phNote" placeholder="Example: This is our math book. We do math 4 days each week."></textarea>
+        </label>
+        <p class="note" style="margin:0">Your photos go to Claude to read. This site does not keep your photos. You can read up to <span id="phLimit">300</span> pages each month.</p>
+        </div></details>
+        <div class="row"><button class="btn primary fit" id="phGo">Read my photos</button><button class="btn fit" id="phStop" hidden>Stop</button><span class="note" id="phMsg" role="status"></span></div>
+      </div>
+      <div id="phResults" hidden>
+        <h3 style="margin-top:6px">Check before you add</h3>
+        <p class="note" style="margin:4px 0 0">Remove the check from items you do not want. Fix the day, section, or words. Claude can make errors, so compare the steps to your book.</p>
+        <div id="phWarn" class="hint" hidden></div>
+        <ul class="prev" id="phList"></ul>
+        <div class="row" style="margin-top:10px"><button class="btn primary fit" id="phAdd">Add to planner</button><button class="btn fit" id="phDiscard">Cancel</button></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="panel" id="goalsPanel">
+    <summary><h2 id="goalsTitle">This week's goals</h2><span class="note" id="goalsCount"></span></summary>
+    <p class="note" style="margin:6px 0 0">Write what your child must do by the end of the week. On the last day, mark each goal.</p>
+    <ul class="glist" id="goalList"></ul>
+    <div class="row" style="margin-top:8px">
+      <input type="text" id="goalInput" placeholder="Example: Read words with the long a sound" aria-label="New goal">
+      <button class="btn primary fit" id="goalAddBtn">Add goal</button>
+    </div>
+    <details class="more" style="margin-top:8px"><summary>How another family uses this</summary><p class="note" style="margin:6px 0 0">They write one goal for each subject. Each goal starts with “By Friday, my child can”. They read the goals on Monday. They mark the goals on Friday.</p></details>
+  </details>
+
+  <div id="day"></div>
+
+  <section class="panel" id="notesPanel">
+    <h2>Teacher notes</h2>
+    <p class="note" style="margin:4px 0 8px">Write what went well and what to do again. This page saves your notes automatically.</p>
+    <textarea id="notes" placeholder="Notes for today" aria-label="Teacher notes for today"></textarea>
+  </section>
+
+  <details class="panel" id="missedPanel">
+    <summary><h2>Missed items</h2><span class="note" id="missedCount"></span></summary>
+    <p class="note" style="margin:6px 0">These items from past school days are not checked. Check them when you finish them.</p>
+    <ul class="items" id="missedList"></ul>
+  </details>
+
+  <details class="panel" id="invitePanel" hidden>
+    <summary><h2>Invite families</h2><span class="note" id="inviteCount"></span></summary>
+    <div style="display:grid;gap:10px;margin-top:10px">
+      <p class="note" style="margin:0">Type a family's email. They get an email with a link to make their planner. Only people you invite can sign in.</p>
+      <div class="row"><input type="text" id="invEmail" inputmode="email" autocomplete="off" placeholder="friend@example.com" aria-label="Email to invite"><button class="btn primary fit" id="invSend">Send invitation</button></div>
+      <p class="note" id="invMsg" role="status" style="margin:0"></p>
+      <ul class="items" id="invList"></ul>
+    </div>
+  </details>
+
+  <details class="panel" id="setupPanel">
+    <summary><h2>Setup</h2><span class="note">Dates, sections, and backups</span></summary>
+    <div class="ui" style="display:grid;gap:10px;margin-top:10px">
+      <label class="lbl">Planner name<input type="text" id="sName"></label>
+      <label class="lbl">Child's first name or nickname (optional)<input type="text" id="sChild"></label>
+      <div class="row">
+        <label class="lbl">First day of school<input type="date" id="sStart"></label>
+        <label class="lbl">Number of school weeks<input type="number" id="sWeeks" min="1" max="60"></label>
+      </div>
+      <label class="lbl">Break weeks: the Monday of each week off, separated by commas
+        <input type="text" id="sBreaks" placeholder="2026-11-23, 2026-12-21, 2026-12-28"></label>
+      <fieldset style="border:1px solid var(--line);border-radius:10px;padding:8px 12px">
+        <legend class="note">School days</legend>
+        <div class="row" id="sDays"></div>
+      </fieldset>
+      <h3 style="margin-top:8px">Sections, in the order you do them</h3>
+      <p class="note" style="margin:0">Change the names and the order to match your books. Optional sections do not show on a short day.</p>
+      <div id="secList"></div>
+      <button class="btn fit" id="secAdd" style="justify-self:start">Add a section</button>
+      <button class="btn primary fit" id="saveSetup" style="justify-self:start">Save setup</button>
+      <h3 style="margin-top:14px">Backups</h3>
+      <p class="note" style="margin:0" id="backupNote"></p>
+      <div class="row">
+        <button class="btn fit" id="exportBtn">Download backup</button>
+        <label class="btn fit" style="cursor:pointer">Restore from backup<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+        <button class="btn danger fit" id="resetBtn">Start over</button>
+      </div>
+      <div id="acctSection" hidden>
+        <h3 style="margin-top:14px">Your account</h3>
+        <p class="note" style="margin:0">This deletes your account, your planner, and your photo count. You cannot undo it.</p>
+        <div class="row" style="margin-top:6px"><button class="btn danger fit" id="deleteAcctBtn">Delete my account</button></div>
+      </div>
+    </div>
+  </details>
+  <p class="foot">Only you can see your planner. <a href="privacy.html">Privacy</a></p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ===== Homeschool Day Planner (test version) =====
+   Saves privately per person in this page's database (data/users/<id>/...), one document for setup and one per week,
+   or in this browser when the database can't take writes. "Fill from photos" asks Claude to read curriculum pages. */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const DAYS=[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]];
+const OFF={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
+const LKEY="hs-day-planner-local-v1";
+
+const DEFAULT_SECTIONS=[
+ {id:"morning",title:"Morning Time",tag:"Together, first thing",color:"morning",optional:false,
+  hint:"Do these together each day: a prayer, the calendar, a Bible story, a song, memory work, and a poem. Add each item for “Every day this week”.",
+  mine:"A prayer with each step written out. Calendar time. A manner for the week. A Bible story. A hymn for the month. Memory work, with 3 new catechism questions each week. A poem for the week, with all of its words."},
+ {id:"language",title:"Phonics, spelling, and reading",tag:"They go together",color:"core",optional:false,
+  hint:"Phonics, the spelling lesson, and your child reads to you. Write the steps in the notes. Then you do not need to open the teacher's book.",
+  mine:"Phonics flashcards first. Then a spelling lesson with a step list for each of the 5 days, and a test on Friday. Then the child reads aloud."},
+ {id:"writing",title:"Writing",tag:"Copybook and handwriting",color:"core",optional:false,
+  hint:"Copywork, handwriting, or cursive. If a passage takes all week, add one step for each day.",
+  mine:"One passage each week, in steps: talk about it, learn it, copy it, check it, and draw a picture. Also cursive letters."},
+ {id:"math",title:"Math",tag:"",color:"core",optional:false,
+  hint:"The math lesson for the day. Put the lesson number in the title.",
+  mine:"Singapore Dimensions Math, 2 lessons each day to catch up."},
+ {id:"science",title:"Science",tag:"Hands-on",color:"extra",optional:false,
+  hint:"One hands-on lesson each week. Add a note to get the supplies the night before.",
+  mine:"Science in the Beginning, 1 lesson each Wednesday."},
+ {id:"extra",title:"If there's time",tag:"Pick one or skip",color:"extra",optional:true,
+  hint:"Art, music, crafts, history, nature walks, and trips. Do one if you have time. This section does not show on a short day.",
+  mine:"A painting and a piece of music each week. Crafts that go with the book. History talks. Local trips."},
+ {id:"readaloud",title:"Read aloud",tag:"You read to your child",color:"read",optional:false,
+  hint:"The book you read to your child. Read it on Monday. Ask questions about it on the other days.",
+  mine:"One picture book each week. New words on Monday. Questions about the pictures Tuesday to Thursday. Questions about the story on Friday."},
+ {id:"close",title:"Close the day",tag:"",color:"morning",optional:false,
+  hint:"End the school day: a prayer, clean up, or ask “What did you learn today?”",
+  mine:"A prayer that the family says together, standing."}
+];
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parseISO(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());return m?new Date(+m[1],+m[2]-1,+m[3]):null}
+function blank(){const d=new Date();const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));
+  return {setup:{name:"Homeschool Day Planner",child:"",start:iso(mon),weeks:36,breaks:[],days:["mon","tue","wed","thu","fri"]},
+    sections:JSON.parse(JSON.stringify(DEFAULT_SECTIONS)),weeks:{},checks:{},notes:{},short:{},goals:{}}}
+let S=blank();
+
+/* ----- storage: one private row per family in the database (row-level security), or this browser in try-it mode ----- */
+const Store={mode:null,sb:null,user:null,version:0,timer:null,inflight:false,dirty:false,
+  setStatus(t,warn){const el=$("saveState");el.textContent=t;el.dataset.s=warn?"warn":""},
+  local(){try{localStorage.setItem(this.mode==="cloud"?LKEY+"-"+this.user.id:LKEY,JSON.stringify(S))}catch(e){}},
+  async load(){
+    if(this.mode==="demo"){let d=null;try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}S=d&&d.setup?d:blank();
+      this.setStatus("This browser keeps your planner. Make an account to keep it on every device.",true);$("backupNote").textContent="This browser keeps your planner. Download a backup each week.";return}
+    this.setStatus("Loading your planner…");
+    const {data,error}=await this.sb.from("planners").select("data,version").eq("user_id",this.user.id).maybeSingle();
+    if(error){let d=null;try{d=JSON.parse(localStorage.getItem(LKEY+"-"+this.user.id)||"null")}catch(e){}S=d&&d.setup?d:blank();this.version=-1;this.setStatus("Your saved planner did not load. This browser keeps your changes for now.",true);return}
+    if(!data){S=blank();const ins=await this.sb.from("planners").insert({user_id:this.user.id,data:S,version:1});this.version=ins.error?-1:1;this.setStatus(ins.error?"Not saved yet.":"Saved to your account",!!ins.error)}
+    else{S=data.data&&data.data.setup?{...blank(),...data.data}:blank();this.version=data.version;this.local();this.setStatus("Saved to your account")}
+    $("backupNote").textContent="Your planner saves to your account automatically. Only you can see it. You can also download a copy.";
+  },
+  mark(){this.local();if(this.mode!=="cloud")return;this.dirty=true;this.setStatus("Saving…");clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),800)},
+  async flush(){
+    if(this.inflight||!this.dirty)return;this.inflight=true;this.dirty=false;
+    try{
+      if(this.version<0){const r=await this.sb.from("planners").select("version").eq("user_id",this.user.id).maybeSingle();if(r.error)throw r.error;
+        if(!r.data){const ins=await this.sb.from("planners").insert({user_id:this.user.id,data:S,version:1});if(ins.error)throw ins.error;this.version=1;this.setStatus("Saved to your account");return}
+        this.version=r.data.version}
+      const {data,error}=await this.sb.from("planners").update({data:S,version:this.version+1,updated_at:new Date().toISOString()}).eq("user_id",this.user.id).eq("version",this.version).select("version");
+      if(error)throw error;
+      if(!data||!data.length){const r=await this.sb.from("planners").select("data,version").eq("user_id",this.user.id).maybeSingle();
+        if(r.data){S={...blank(),...r.data.data};this.version=r.data.version;this.local();render();toast("Your planner changed on a different device. This shows the newest version. Do your last change again if you do not see it.")}
+        this.setStatus("Saved to your account");return}
+      this.version=data[0].version;this.setStatus("Saved to your account");
+    }catch(e){this.dirty=true;this.setStatus("Not saved yet. The page tries again soon.",true);clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),5000)}
+    finally{this.inflight=false;if(this.dirty&&this.version>=0){clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),800)}}
+  }
+};
+function save(){Store.mark()}
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2800)}
+
+/* ----- calendar ----- */
+function weekMondays(){
+  const st=parseISO(S.setup.start)||new Date();const mon=new Date(st);mon.setDate(st.getDate()-((st.getDay()+6)%7));
+  const breaks=new Set((S.setup.breaks||[]).map(b=>{const d=parseISO(b);if(!d)return "";d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)}));
+  const out=[];const cur=new Date(mon);let guard=0;
+  while(out.length<S.setup.weeks&&guard++<200){if(!breaks.has(iso(cur)))out.push(new Date(cur));cur.setDate(cur.getDate()+7)}
+  return out;
+}
+function dateOf(w,dk){const m=weekMondays()[w-1];if(!m)return null;const d=new Date(m);d.setDate(m.getDate()+OFF[dk]);return d}
+function daysOf(w){const st=parseISO(S.setup.start);return DAYS.filter(d=>S.setup.days.includes(d[0])).filter(d=>{const dt=dateOf(w,d[0]);return !(st&&dt&&dt<st)})}
+const sameDay=(a,b)=>a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+function todayPos(){const now=new Date();now.setHours(0,0,0,0);const n=weekMondays().length;
+  for(let w=1;w<=n;w++)for(const d of daysOf(w)){if(dateOf(w,d[0])>=now)return {w,d:d[0]}}
+  const ld=daysOf(n||1).slice(-1)[0];return {w:n||1,d:ld?ld[0]:"mon"}}
+const fmt=d=>d?d.toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
+const dayName=k=>(DAYS.find(d=>d[0]===k)||["",""])[1];
+
+/* ----- week data ----- */
+function wk(w){return S.weeks[w]=S.weeks[w]||{every:{},days:{}}}
+function itemsFor(w,dk,sec){const W=S.weeks[w]||{every:{},days:{}};return [...(W.every[sec]||[]).map(it=>({...it,every:true})),...((W.days[dk]||{})[sec]||[])]}
+const ck=(w,dk,id)=>w+"-"+dk+"-"+id;
+function hasAnyPlan(){return Object.values(S.weeks).some(W=>Object.values(W.every||{}).some(a=>a.length)||Object.values(W.days||{}).some(o=>Object.values(o).some(a=>a.length)))}
+
+/* ----- render ----- */
+let curW=1,cur="mon",editing=false,editId=null;
+function render(){
+  const n=weekMondays().length;if(curW>n)curW=Math.max(1,n);
+  const ds=daysOf(curW);if(!ds.find(d=>d[0]===cur))cur=ds[0]?ds[0][0]:"mon";
+  try{localStorage.setItem(LKEY+"-pos",JSON.stringify({w:curW,d:cur}))}catch(e){}
+  $("title").textContent=S.setup.name||"Homeschool Day Planner";
+  const dt=dateOf(curW,cur);
+  $("subtitle").textContent=(S.setup.child?S.setup.child+" · ":"")+"Week "+curW+" of "+n+(dt?" · "+dt.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}):"");
+  const any=hasAnyPlan(),wizOn=!S.setup.done&&!any;
+  $("wizard").hidden=!wizOn;$("topbar").hidden=wizOn;$("lede").hidden=wizOn;
+  for(const id of ["weeks","tabs","photoPanel","day","setupPanel","saveState"])$(id).hidden=wizOn;$("invitePanel").hidden=wizOn||!isAdminFlag;
+  for(const id of ["goalsPanel","notesPanel","missedPanel","shortBtn"])$(id).hidden=wizOn||!any;
+  if(wizOn)renderWizard();
+  const exHere=Object.values(S.weeks).some(W=>JSON.stringify(W).includes('"ex":true'));
+  $("welcome").innerHTML=wizOn?"":(exHere?`<div class="exbanner"><span>This is an <b>example week</b>. Select other days to see more.</span><button class="btn small" id="clearEx">Delete the example</button></div>`:"")+(any&&Store.mode==="demo"&&backupDue()?`<div class="banner"><b>Keep your planner safe.</b> Your planner is only in this browser. If you clear your browser data, you lose it. Download a backup each week.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-backup="1">Download a backup now</button></div></div>`:"")+(any?"":`<div class="banner"><b>Your week is empty.</b> To start, take photos of one week in your teacher's book.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-start="photos">Use photos</button><button class="btn fit" data-start="type">Type lessons</button><button class="btn fit" data-start="example">Show an example</button></div></div>`);
+  renderWeeks();renderTabs();renderGoals();renderDay();renderPhotoWeeks();
+  const ta=$("notes");if(document.activeElement!==ta)ta.value=S.notes[curW+"-"+cur]||"";
+  $("editBtn").setAttribute("aria-pressed",editing);$("editBtn").classList.toggle("on",editing);$("editBtn").textContent=editing?"Done planning":"Plan this week";
+  const sh=!!S.short[curW+"-"+cur];$("shortBtn").setAttribute("aria-pressed",sh);$("shortBtn").classList.toggle("on",sh);
+  renderMissed();
+}
+function renderWeeks(){const now=todayPos();
+  $("weeks").innerHTML=`<button class="todaybtn" data-today="1">Today</button>`+weekMondays().map((m,i)=>`<button data-w="${i+1}" aria-pressed="${i+1===curW}"${i+1===now.w?" data-now":""}>Wk ${i+1}<small>${fmt(m)}</small></button>`).join("");
+  const sel=$("weeks").querySelector('[aria-pressed="true"]');if(sel)sel.scrollIntoView({block:"nearest",inline:"center"})}
+function renderTabs(){const now=new Date();
+  $("tabs").innerHTML=daysOf(curW).map(([k,l])=>{const d=dateOf(curW,k);return `<button data-d="${k}" aria-pressed="${k===cur}"${sameDay(d,now)?" data-today":""}>${l} ${d?d.getDate():""}</button>`}).join("")}
+function renderGoals(){const G=S.goals[curW]||[];
+  $("goalsTitle").textContent="Week "+curW+" goals";
+  const met=G.filter(g=>g.s==="met").length,marked=G.filter(g=>g.s).length;
+  $("goalsCount").textContent=G.length?(marked?met+" of "+G.length+" met":G.length+" goal"+(G.length===1?"":"s")):"none yet";
+  $("goalList").innerHTML=G.map((g,i)=>`<li><div>${esc(g.t)}${editing?` <button class="btn small" data-gdel="${i}">Remove</button>`:""}</div><div class="gbtns">${[["met","Met"],["notyet","Not yet"],["carry","Carry over"]].map(([v,l])=>`<button type="button" data-g="${i}" data-v="${v}" aria-pressed="${g.s===v}">${l}</button>`).join("")}</div></li>`).join("")||`<li class="note" style="grid-template-columns:1fr">No goals for this week yet.</li>`;
+  const ks=daysOf(curW).map(d=>d[0]),p=$("goalsPanel");
+  if(p.dataset.k!==curW+cur){p.dataset.k=curW+cur;p.open=cur===ks[0]||cur===ks[ks.length-1]}
+  if(editing)p.open=true}
+function renderDay(){
+  const sh=!!S.short[curW+"-"+cur];let n=0;const later=[];
+  $("day").innerHTML=S.sections.map(sec=>{
+    const items=itemsFor(curW,cur,sec.id);const hidden=sec.optional&&sh;
+    if(!editing&&!items.length){if(!hidden)later.push(sec);return ""}
+    if(!hidden)n++;
+    const lis=items.map(it=>{const id=ck(curW,cur,it.id);
+      if(editing&&editId===it.id)return `<li><div class="form" data-editform="${it.id}" data-sec="${sec.id}"><input type="text" data-f="t" value="${esc(it.t)}" aria-label="Item"><textarea data-f="n" aria-label="Notes or how-to steps">${esc(it.n||"")}</textarea><div class="row"><button class="btn primary fit" data-saveit="${it.id}" data-sec="${sec.id}">Save</button><button class="btn fit" data-cancelit="1">Cancel</button></div></div></li>`;
+      return `<li><label class="task"><input type="checkbox" data-ck="${esc(id)}" ${S.checks[id]?"checked":""}><span>${it.every?`<span class="every">Every day this week</span>`:""}<span class="main">${esc(it.t)}</span>${it.n?`<span class="n">${esc(it.n)}</span>`:""}</span></label>${editing?`<div class="itemtools"><button class="btn small" data-editit="${it.id}">Edit</button><button class="btn small" data-delit="${it.id}" data-sec="${sec.id}">Remove</button></div>`:""}</li>`}).join("");
+    const empty=!items.length?`<div class="hint"><b>Ideas:</b> ${esc(sec.hint||"Add what you do in this part of the day.")}${sec.mine?`<details class="more" style="margin-top:6px"><summary>How another family uses this</summary><p style="margin:6px 0 0">${esc(sec.mine)}</p></details>`:""}</div>`:"";
+    const add=editing?`<div class="form addrow" data-addfor="${sec.id}"><input type="text" placeholder="Add to ${esc(sec.title)}" data-f="t" aria-label="New item for ${esc(sec.title)}"><textarea placeholder="Notes or how-to steps (optional)" data-f="n" style="min-height:52px" aria-label="Notes"></textarea><div class="row"><select data-f="scope" aria-label="When"><option value="day">Just ${dayName(cur)}</option><option value="every">Every day this week</option></select><button class="btn primary fit" data-add="${sec.id}">Add</button></div></div>`:"";
+    return `<section class="block ${esc(sec.color||"core")}${hidden?" short-hidden":""}"><header><h2><span class="stepn">${n}</span>${esc(sec.title)}</h2>${sec.tag?`<span class="tag">${esc(sec.tag)}</span>`:""}</header><div class="inner">${lis?`<ul class="items">${lis}</ul>`:""}${empty}${add}</div></section>`;
+  }).join("")+(!editing&&later.length&&hasAnyPlan()?`<div class="later">No items today for: ${later.map(x=>esc(x.title)).join(", ")}.<div class="row"><button class="btn small" data-start="type">Add an item</button></div></div>`:"")+(editing?`<div class="row" style="margin:6px 0"><button class="btn fit" id="copyNext">Copy this week to next week</button><span class="note">Copies every item (not checkmarks) into Week ${curW+1}.</span></div>`:"");
+}
+function renderMissed(){
+  const now=new Date();now.setHours(0,0,0,0);const out=[],n=weekMondays().length;
+  for(let w=1;w<=n;w++)for(const [dk,l] of daysOf(w)){const d=dateOf(w,dk);if(!d||d>=now)continue;
+    if(S.setup.since&&iso(d)<S.setup.since)continue;
+    S.sections.forEach(sec=>{if(sec.optional)return;itemsFor(w,dk,sec.id).forEach(it=>{const id=ck(w,dk,it.id);if(!S.checks[id]&&!it.ex)out.push({id,w,l,d,sec:sec.title,t:it.t})})})}
+  $("missedCount").textContent=out.length?out.length+" to catch up":"all caught up";
+  $("missedList").innerHTML=out.slice(-60).reverse().map(x=>`<li><label class="task"><input type="checkbox" data-ck="${esc(x.id)}"><span><span class="main">${esc(x.t)}</span><span class="n">Week ${x.w}, ${x.l} ${fmt(x.d)} · ${esc(x.sec)}</span></span></label></li>`).join("")||`<li class="note">Nothing missed.</li>`;
+}
+
+/* ----- events ----- */
+$("weeks").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.today){const p=todayPos();curW=p.w;cur=p.d}else curW=+b.dataset.w;editId=null;render()});
+$("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(!b)return;cur=b.dataset.d;editId=null;render()});
+document.addEventListener("change",e=>{const c=e.target.closest("input[data-ck]");if(!c)return;const k=c.dataset.ck;if(c.checked)S.checks[k]=true;else delete S.checks[k];save(+k.split("-")[0]);if(c.closest("#missedList"))render();else renderMissed()});
+$("editBtn").addEventListener("click",()=>{editing=!editing;editId=null;render()});
+$("shortBtn").addEventListener("click",()=>{const k=curW+"-"+cur;if(S.short[k])delete S.short[k];else S.short[k]=true;save(curW);render()});
+$("notes").addEventListener("input",e=>{const k=curW+"-"+cur;if(e.target.value.trim())S.notes[k]=e.target.value;else delete S.notes[k];save(curW)});
+$("goalAddBtn").addEventListener("click",()=>{const t=$("goalInput").value.trim();if(!t)return;(S.goals[curW]=S.goals[curW]||[]).push({t});$("goalInput").value="";save(curW);renderGoals()});
+$("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("goalAddBtn").click()});
+$("goalList").addEventListener("click",e=>{const G=S.goals[curW]||[];const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.gdel!=null)G.splice(+b.dataset.gdel,1);else if(b.dataset.g!=null){const g=G[+b.dataset.g];g.s=g.s===b.dataset.v?undefined:b.dataset.v}
+  S.goals[curW]=G;save(curW);renderGoals()});
+function confirmInline(b,msg,label){if(b.dataset.armed)return true;b.dataset.armed="1";const old=b.textContent;b.textContent=label||"Tap to confirm";toast(msg);setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=old}},4000);return false}
+function findItem(id){const W=wk(curW);for(const sec in W.every){const L=W.every[sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:true}}
+  for(const sec in (W.days[cur]||{})){const L=W.days[cur][sec];const i=L.findIndex(x=>x.id===id);if(i>=0)return {L,i,every:false}}return null}
+$("day").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.add){const box=b.closest("[data-addfor]");const tEl=box.querySelector('[data-f="t"]');const t=tEl.value.trim();if(!t){tEl.focus();return}
+    const n=box.querySelector('[data-f="n"]').value.trim(),scope=box.querySelector('[data-f="scope"]').value,W=wk(curW),sec=b.dataset.add,it={id:uid(),t,n};
+    if(scope==="every")(W.every[sec]=W.every[sec]||[]).push(it);else{W.days[cur]=W.days[cur]||{};(W.days[cur][sec]=W.days[cur][sec]||[]).push(it)}
+    save(curW);renderDay();const nb=$("day").querySelector(`[data-addfor="${sec}"] [data-f="t"]`);if(nb)nb.focus();toast("Added");return}
+  if(b.dataset.editit){editId=b.dataset.editit;renderDay();return}
+  if(b.dataset.cancelit){editId=null;renderDay();return}
+  if(b.dataset.saveit){const f=findItem(b.dataset.saveit);const box=b.closest("[data-editform]");if(f){const t=box.querySelector('[data-f="t"]').value.trim();if(t)f.L[f.i].t=t;f.L[f.i].n=box.querySelector('[data-f="n"]').value.trim();save(curW)}editId=null;renderDay();return}
+  if(b.dataset.delit){const f=findItem(b.dataset.delit);if(!f)return;if(f.every&&!confirmInline(b,"This removes it from every day this week.","Tap to remove"))return;f.L.splice(f.i,1);save(curW);renderDay();renderMissed();return}
+  if(b.id==="copyNext"){if(curW>=weekMondays().length){toast("This is the last week");return}
+    const src=wk(curW),dst=wk(curW+1);const cp=L=>L.map(x=>({id:uid(),t:x.t,n:x.n}));
+    for(const sec in src.every)dst.every[sec]=[...(dst.every[sec]||[]),...cp(src.every[sec])];
+    for(const dk in src.days){dst.days[dk]=dst.days[dk]||{};for(const sec in src.days[dk])dst.days[dk][sec]=[...(dst.days[dk][sec]||[]),...cp(src.days[dk][sec])]}
+    save(curW+1);toast("Copied into Week "+(curW+1))}
+});
+
+/* ----- setup ----- */
+function fillSetup(){
+  $("sName").value=S.setup.name||"";$("sChild").value=S.setup.child||"";$("sStart").value=S.setup.start||"";$("sWeeks").value=S.setup.weeks;$("sBreaks").value=(S.setup.breaks||[]).join(", ");
+  $("sDays").innerHTML=DAYS.map(([k,l])=>`<label class="fit" style="font-family:var(--sans);font-size:.9rem"><input type="checkbox" value="${k}" ${S.setup.days.includes(k)?"checked":""}> ${l}</label>`).join("");
+  $("secList").innerHTML=S.sections.map((s,i)=>`<div class="secedit" data-i="${i}">
+    <div class="row"><input type="text" data-s="title" value="${esc(s.title)}" aria-label="Section name"><input type="text" data-s="tag" value="${esc(s.tag||"")}" placeholder="Short label (optional)" aria-label="Section label"></div>
+    <div class="row"><select data-s="color" aria-label="Color" style="flex:0 1 150px">${[["morning","Orange"],["core","Green"],["extra","Brown"],["read","Purple"]].map(([v,l])=>`<option value="${v}" ${s.color===v?"selected":""}>${l}</option>`).join("")}</select>
+      <label class="fit" style="font-family:var(--sans);font-size:.85rem"><input type="checkbox" data-s="optional" ${s.optional?"checked":""}> Optional</label>
+      <span class="fit" style="display:flex;gap:4px"><button class="btn small" data-mv="-1" aria-label="Move up">↑</button><button class="btn small" data-mv="1" aria-label="Move down">↓</button><button class="btn small" data-rm="1">Remove</button></span></div></div>`).join("");
+}
+function readSections(){$("secList").querySelectorAll(".secedit").forEach(el=>{const s=S.sections[+el.dataset.i];el.querySelectorAll("[data-s]").forEach(f=>{s[f.dataset.s]=f.type==="checkbox"?f.checked:f.value.trim()});if(!s.title)s.title="Untitled section"})}
+$("secList").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;readSections();const i=+b.closest(".secedit").dataset.i;
+  if(b.dataset.mv){const j=i+(+b.dataset.mv);if(j<0||j>=S.sections.length)return;[S.sections[i],S.sections[j]]=[S.sections[j],S.sections[i]]}
+  if(b.dataset.rm){if(!confirmInline(b,"Items planned in this section stay saved but won't show.","Tap to remove"))return;S.sections.splice(i,1)}
+  save("meta");fillSetup();render()});
+$("secAdd").addEventListener("click",()=>{readSections();S.sections.push({id:"s"+uid(),title:"New section",tag:"",color:"core",optional:false,hint:"Add what you do in this part of the day.",mine:""});save("meta");fillSetup();render()});
+$("saveSetup").addEventListener("click",()=>{readSections();
+  const st=parseISO($("sStart").value);if(!st){toast("Pick a first day of school");return}
+  const weeks=Math.max(1,Math.min(60,parseInt($("sWeeks").value,10)||36));const bad=[];
+  const breaks=$("sBreaks").value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean).filter(x=>{if(parseISO(x))return true;bad.push(x);return false});
+  const days=[...$("sDays").querySelectorAll("input:checked")].map(x=>x.value);if(!days.length){toast("Choose at least one school day");return}
+  S.setup={...S.setup,name:$("sName").value.trim()||"Homeschool Day Planner",child:$("sChild").value.trim(),start:iso(st),weeks,breaks,days};
+  save("meta");render();toast(bad.length?"Saved. Skipped dates that weren't YYYY-MM-DD: "+bad.join(", "):"Setup saved")});
+$("setupBtn").addEventListener("click",()=>{$("setupPanel").open=true;$("setupPanel").scrollIntoView({behavior:"smooth"})});
+$("setupPanel").addEventListener("toggle",()=>{if($("setupPanel").open)fillSetup()});
+
+/* ----- backup ----- */
+function lastBackup(){try{return +localStorage.getItem(LKEY+"-lastbackup")||0}catch(e){return 0}}
+function backupDue(){return Date.now()-lastBackup()>7*864e5}
+document.addEventListener("click",e=>{if(e.target.closest("[data-backup]"))$("exportBtn").click()});
+$("exportBtn").addEventListener("click",async()=>{
+  const data=JSON.stringify(S,null,1),filename=(S.setup.name||"planner").replace(/[^\w-]+/g,"-").toLowerCase()+"-backup-"+iso(new Date())+".json";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  try{localStorage.setItem(LKEY+"-lastbackup",String(Date.now()))}catch(_){}toast("Backup downloaded");render()});
+$("importFile").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||!d.setup||!Array.isArray(d.sections))throw 0;
+    S={...blank(),...d};S.checks=S.checks||{};S.notes=S.notes||{};S.short=S.short||{};S.goals=S.goals||{};S.weeks=S.weeks||{};
+    save("meta");Object.keys(S.weeks).forEach(w=>save(+w));fillSetup();render();toast("Backup restored")}catch(_){toast("That file isn't a planner backup")}e.target.value=""};r.readAsText(f)});
+$("resetBtn").addEventListener("click",e=>{if(!confirmInline(e.target,"This erases your whole planner. Download a backup first.","Tap to erase"))return;
+  const old=Object.keys(S.weeks);S=blank();save("meta");old.forEach(w=>save(+w));fillSetup();curW=1;cur="mon";render();toast("Started over")});
+
+/* ----- fill from photos ----- */
+let sampleNS=null,limits=null,phAbort=null,proposal=null;
+function renderPhotoWeeks(){const sel=$("phWeek"),v=sel.value||String(curW);sel.innerHTML=weekMondays().map((m,i)=>`<option value="${i+1}">Week ${i+1} (${fmt(m)})</option>`).join("");sel.value=String(Math.min(+v||curW,weekMondays().length))}
+$("photoPanel").addEventListener("toggle",async()=>{if(!$("photoPanel").open)return;$("phWeek").value=String(curW);
+  const ok=Store.mode==="cloud";limits=ok?{images:{maxCount:5,maxInputBytes:30e6,mediaTypes:["image/jpeg","image/png","image/webp","image/gif"]}}:false;
+  $("photoForm").hidden=!ok;const u=$("photoUnavailable");u.hidden=ok;
+  if(!ok)u.textContent="Photos need an account. You can type your lessons with Plan this week."});
+/* Photos are shrunk in the browser, then sent to the site's read-photos function, which holds the AI key and the page limit. */
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");
+    c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    const data=c.toDataURL("image/jpeg",0.85).split(",")[1];return {media_type:"image/jpeg",data}}
+  finally{URL.revokeObjectURL(url)}}
+async function readPhotos(files,mode,note,carry,signal){
+  const images=[];for(const f of files)images.push(await shrink(f));
+  const {data:sess}=await Store.sb.auth.getSession();const token=sess&&sess.session&&sess.session.access_token;
+  if(!token)throw {code:"signed_out"};
+  const cfg=window.PLANNER_CONFIG||{};
+  let r;try{r=await fetch(cfg.supabaseUrl.replace(/\/$/,"")+"/functions/v1/read-photos",{method:"POST",signal,headers:{"Content-Type":"application/json",apikey:cfg.supabaseAnonKey,Authorization:"Bearer "+token},
+    body:JSON.stringify({images,mode,note,carry,days:S.setup.days,sections:S.sections.map(x=>({id:x.id,title:x.title,hint:x.hint||""}))})})}
+  catch(e){if(signal&&signal.aborted)throw {code:"cancelled"};throw {code:"upstream",message:"The site could not reach Claude. Check your connection and try again."}}
+  const out=await r.json().catch(()=>({}));
+  if(!r.ok)throw {code:out.code||"upstream",message:out.error||"Claude could not read these photos. Try again."};
+  if(out.pageLimit){$("phLimit").textContent=out.pageLimit}
+  return out}
+$("phGo").addEventListener("click",async()=>{
+  const files=[...$("phFiles").files];if(!files.length){toast("Choose at least one photo");return}
+  if(!limits||!limits.images)return;
+  const max=Math.max(1,limits.images.maxCount),tooBig=files.filter(f=>f.size>limits.images.maxInputBytes),ok=files.filter(f=>f.size<=limits.images.maxInputBytes);
+  const mode=$("phMode").value,note=$("phNote").value.trim(),startW=+$("phWeek").value||curW;
+  const batches=[];for(let i=0;i<ok.length;i+=max)batches.push(ok.slice(i,i+max));
+  phAbort=new AbortController();$("phGo").disabled=true;$("phStop").hidden=false;
+  const all={items:[],goals:[],warnings:tooBig.map(f=>`${f.name} is too large to send. Try a smaller photo.`)};let lastWeek=0;
+  try{
+    for(let b=0;b<batches.length;b++){
+      $("phMsg").textContent=`Reading photos ${b*max+1}–${b*max+batches[b].length} of ${ok.length}…`;
+      const res=await readPhotos(batches[b],mode,note,lastWeek,phAbort.signal);
+      const items=Array.isArray(res&&res.items)?res.items:[];
+      items.forEach(x=>{const w=mode==="one"?1:Math.max(1,parseInt(x.week,10)||1);lastWeek=Math.max(lastWeek,w);all.items.push({...x,week:w})});
+      (Array.isArray(res&&res.goals)?res.goals:[]).forEach(g=>all.goals.push({week:mode==="one"?1:Math.max(1,parseInt(g.week,10)||1),text:String(g.text||g||"")}));
+      (Array.isArray(res&&res.warnings)?res.warnings:[]).forEach(w=>all.warnings.push(String(w)));
+    }
+    $("phMsg").textContent=all.items.length?`Claude found ${all.items.length} items. Check them below.`:"Claude did not find lessons in these photos.";
+  }catch(e){
+    const code=e&&e.code;
+    const msg={limit:e&&e.message,signed_out:"Please sign in again, then try again.",not_configured:"Photo reading is not on for this site yet. You can type your lessons with Plan this week.",upstream:e&&e.message,cancelled:"Stopped.",not_granted:"This page isn't allowed to use Claude. Allow it when asked, then try again.",sampling_disabled:"Claude isn't available for this account.",images_unavailable:"This view can't send photos to Claude.",image_rejected:"One of the photos couldn't be read. Try a clearer JPEG or PNG.",rate_limited:"You've reached a usage limit for now. Try again later.",session_expired:"Please sign in to Claude again, then retry.",refused:"Claude couldn't help with those pages. Try different photos.",invalid_json:"Claude's answer came back in the wrong shape. Try again, or send fewer photos at once.",empty_completion:"Claude didn't return anything. Try fewer or clearer photos.",prompt_too_large:"That's too much at once. Try fewer photos or a shorter note."}[code]||"Something went wrong reading the photos. Try again.";
+    $("phMsg").textContent=(all.items.length?"Claude stopped before the end. ":"")+msg;
+  }finally{$("phGo").disabled=false;$("phStop").hidden=true;phAbort=null}
+  if(all.items.length||all.goals.length){proposal={start:startW,...all};showProposal()}
+});
+$("phStop").addEventListener("click",()=>{if(phAbort)phAbort.abort()});
+function showProposal(){
+  const P=proposal,n=weekMondays().length,secOpts=id=>S.sections.map(s=>`<option value="${esc(s.id)}" ${s.id===id?"selected":""}>${esc(s.title)}</option>`).join("");
+  const dayOpts=d=>[["every","Every day"],...DAYS.filter(x=>S.setup.days.includes(x[0]))].map(([k,l])=>`<option value="${k}" ${k===d?"selected":""}>${l}</option>`).join("");
+  const wkOpts=w=>Array.from({length:n},(_,i)=>`<option value="${i+1}" ${i+1===w?"selected":""}>Week ${i+1}</option>`).join("");
+  P.items.forEach(x=>{x.realWeek=Math.min(n,P.start+(x.week-1));if(!S.sections.find(s=>s.id===x.section))x.section=(S.sections.find(s=>s.id==="extra")||S.sections[0]).id;if(x.day!=="every"&&!S.setup.days.includes(x.day))x.day=S.setup.days[0];if(x.on===undefined)x.on=true});
+  P.goals.forEach(g=>{g.realWeek=Math.min(n,P.start+(g.week-1));if(g.on===undefined)g.on=true});
+  $("phWarn").hidden=!P.warnings.length;$("phWarn").innerHTML=P.warnings.map(esc).join("<br>");
+  $("phList").innerHTML=P.items.map((x,i)=>`<li data-i="${i}" class="${x.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${x.on?"checked":""}> Add</label><select data-p="realWeek" aria-label="Week">${wkOpts(x.realWeek)}</select><select data-p="day" aria-label="Day">${dayOpts(x.day)}</select><select data-p="section" aria-label="Section">${secOpts(x.section)}</select></div><input type="text" data-p="title" value="${esc(x.title)}" aria-label="Item"><textarea data-p="notes" aria-label="How-to steps">${esc(x.notes||"")}</textarea></li>`).join("")
+    +P.goals.map((g,i)=>`<li data-g="${i}" class="${g.on?"":"off"}"><div class="head"><label><input type="checkbox" data-p="on" ${g.on?"checked":""}> Add goal</label><select data-p="realWeek" aria-label="Week">${wkOpts(g.realWeek)}</select></div><input type="text" data-p="text" value="${esc(g.text)}" aria-label="Goal"></li>`).join("");
+  $("phResults").hidden=false;$("phAdd").textContent=`Add ${P.items.filter(x=>x.on).length} items and ${P.goals.filter(g=>g.on).length} goals`;
+}
+$("phList").addEventListener("input",e=>{const f=e.target.closest("[data-p]");if(!f||!proposal)return;const li=f.closest("li");
+  const obj=li.dataset.g!=null?proposal.goals[+li.dataset.g]:proposal.items[+li.dataset.i];const k=f.dataset.p;
+  obj[k]=f.type==="checkbox"?f.checked:(k==="realWeek"?+f.value:f.value);if(k==="on"){li.classList.toggle("off",!f.checked);$("phAdd").textContent=`Add ${proposal.items.filter(x=>x.on).length} items and ${proposal.goals.filter(g=>g.on).length} goals`}});
+$("phAdd").addEventListener("click",()=>{if(!proposal)return;const touched=new Set();let ni=0,ng=0;
+  proposal.items.filter(x=>x.on&&String(x.title||"").trim()).forEach(x=>{const W=wk(x.realWeek),it={id:uid(),t:String(x.title).trim().slice(0,300),n:String(x.notes||"").trim().slice(0,3000)};
+    if(x.day==="every")(W.every[x.section]=W.every[x.section]||[]).push(it);else{W.days[x.day]=W.days[x.day]||{};(W.days[x.day][x.section]=W.days[x.day][x.section]||[]).push(it)}touched.add(x.realWeek);ni++});
+  proposal.goals.filter(g=>g.on&&g.text.trim()).forEach(g=>{(S.goals[g.realWeek]=S.goals[g.realWeek]||[]).push({t:g.text.trim().slice(0,300)});touched.add(g.realWeek);ng++});
+  touched.forEach(w=>save(w));const first=Math.min(...touched);proposal=null;$("phResults").hidden=true;$("phFiles").value="";$("phMsg").textContent="";
+  if(isFinite(first)){curW=first;const ds=daysOf(curW);cur=ds[0]?ds[0][0]:"mon"}render();toast(`Added ${ni} items and ${ng} goals`)});
+$("phDiscard").addEventListener("click",()=>{proposal=null;$("phResults").hidden=true;$("phMsg").textContent=""});
+
+/* ----- first-visit welcome ----- */
+const WIZ={step:1,start:"",days:null,secs:null};
+const WIZ_DESC={morning:"Prayer, calendar, songs, memory work, together",language:"Phonics, spelling, and your child reading aloud",writing:"Copywork, handwriting, or cursive",math:"Your math lesson",science:"A weekly hands-on lesson",extra:"Art, music, crafts, history: a menu for good days",readaloud:"A book you read to your child",close:"A short way to end the school day"};
+function renderWizard(){
+  if(!WIZ.start)WIZ.start=S.setup.start;if(!WIZ.days)WIZ.days=[...S.setup.days];if(!WIZ.secs)WIZ.secs=S.sections.map(x=>x.id);
+  const w=$("wizard");let h="";
+  if(WIZ.step===1)h=`<div class="stepcount">Step 1 of 3</div><h2>Welcome. When does school start?</h2><p>Select your first day of school. It can be today. Then select your school days. You can change these later.</p>
+    <label class="lbl">First day of school<input type="date" id="wzStart" value="${esc(WIZ.start)}"></label>
+    <div class="row">${DAYS.map(([k,l])=>`<label class="chip fit"><input type="checkbox" data-wday="${k}" ${WIZ.days.includes(k)?"checked":""}>${l}</label>`).join("")}</div>
+    <div class="wiznav"><span></span><button class="btn primary" data-wiz="next">Next</button></div>`;
+  if(WIZ.step===2)h=`<div class="stepcount">Step 2 of 3</div><h2>What do you teach each day?</h2><p>Each item is a section of your day. Remove the check from items you do not teach. You can change the names later in Setup.</p>
+    <div class="chips">${S.sections.map(x=>`<label class="chip"><input type="checkbox" data-wsec="${esc(x.id)}" ${WIZ.secs.includes(x.id)?"checked":""}><span>${esc(x.title)}<small>${esc(WIZ_DESC[x.id]||x.hint||"")}</small></span></label>`).join("")}</div>
+    <div class="wiznav"><button class="btn" data-wiz="back">Back</button><button class="btn primary" data-wiz="next">Next</button></div>`;
+  if(WIZ.step===3)h=`<div class="stepcount">Step 3 of 3</div><h2>How do you want to start?</h2><p>It does not have to be perfect. You can change everything later.</p>
+    <div class="choices">
+      <button class="choice main" data-wizgo="photos"><b>Take photos of my teacher's book</b><span>Claude reads one week of lessons. Then you check them. This is the easiest way.</span></button>
+      <button class="choice" data-wizgo="type"><b>Type my lessons</b><span>Add one lesson at a time.</span></button>
+      <button class="choice" data-wizgo="example"><b>Show me an example week</b><span>See a full week first. Then delete the example.</span></button>
+    </div>
+    <div class="wiznav"><button class="btn" data-wiz="back">Back</button><span></span></div>`;
+  w.innerHTML=`<div class="wiz">${h}</div>`;
+}
+function wizRead(){const st=$("wzStart");if(st)WIZ.start=st.value;
+  const d=[...document.querySelectorAll("[data-wday]")];if(d.length)WIZ.days=d.filter(x=>x.checked).map(x=>x.dataset.wday);
+  const c=[...document.querySelectorAll("[data-wsec]")];if(c.length)WIZ.secs=c.filter(x=>x.checked).map(x=>x.dataset.wsec)}
+$("wizard").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;wizRead();
+  if(b.dataset.wiz==="next"){if(WIZ.step===1&&(!parseISO(WIZ.start)||!WIZ.days.length)){toast(!WIZ.days.length?"Pick at least one school day":"Pick your first day of school");return}
+    if(WIZ.step===2&&!WIZ.secs.length){toast("Keep at least one section");return}WIZ.step++;renderWizard();window.scrollTo(0,0);return}
+  if(b.dataset.wiz==="back"){WIZ.step--;renderWizard();return}
+  if(b.dataset.wizgo){S.setup={...S.setup,start:WIZ.start,days:WIZ.days,done:true,since:iso(new Date())};S.sections=S.sections.filter(x=>WIZ.secs.includes(x.id));save("meta");
+    const p=todayPos();curW=p.w;cur=p.d;startWith(b.dataset.wizgo)}});
+function startWith(kind){
+  if(kind==="example"){loadExample(curW);render();toast("Example week added");return}
+  if(kind==="type"){editing=true;render();const f=$("day").querySelector("[data-addfor] input");if(f)f.focus();return}
+  if(kind==="photos"){render();$("photoPanel").open=true;$("photoPanel").scrollIntoView({behavior:"smooth",block:"start"})}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-start]");if(b){if(!S.setup.done){S.setup.done=true;S.setup.since=iso(new Date())}save("meta");startWith(b.dataset.start);return}
+  if(e.target.id==="clearEx"){const touched=[];for(const w in S.weeks){const W=S.weeks[w],strip=L=>L.filter(x=>!x.ex);
+      for(const sec in W.every)W.every[sec]=strip(W.every[sec]);for(const dk in W.days)for(const sec in W.days[dk])W.days[dk][sec]=strip(W.days[dk][sec]);touched.push(+w)}
+    for(const w in S.goals)S.goals[w]=(S.goals[w]||[]).filter(g=>!g.ex);touched.forEach(w=>save(w));render();toast("Example cleared")}});
+function loadExample(w){
+  const W=wk(w),has=id=>S.sections.some(x=>x.id===id),ds=daysOf(w).map(d=>d[0]);
+  const ev=(sec,t,n)=>{if(has(sec))(W.every[sec]=W.every[sec]||[]).push({id:uid(),t,n,ex:true})};
+  const on=(dk,sec,t,n)=>{if(has(sec)&&ds.includes(dk)){W.days[dk]=W.days[dk]||{};(W.days[dk][sec]=W.days[dk][sec]||[]).push({id:uid(),t,n,ex:true})}};
+  ev("morning","Example: Opening prayer","1. Gather at the table.\n2. Pray together.\n3. Sit down for calendar time.");
+  ev("morning","Example: Calendar and weather","1. Say today's date together.\n2. Name yesterday and tomorrow.\n3. Look outside and name the weather.");
+  ["mon","tue","wed","thu","fri"].forEach((dk,i)=>{
+    on(dk,"language","Example: Phonics, the short "+"aeiou"[i]+" sound","1. Show the letter and say its sound.\n2. Read 5 short words with that sound together.\n3. Your child reads them back to you.");
+    on(dk,"math","Example: Math lesson "+(i+1),"1. Do the warm-up together.\n2. Teach the new idea with objects you can touch.\n3. Your child does the practice page while you watch.")});
+  on("mon","writing","Example: Copy one sentence neatly","1. Read the sentence together.\n2. Your child copies it, looking at each word.\n3. Check it together and fix one thing.");
+  on("wed","writing","Example: Copy one sentence neatly","1. Read the sentence together.\n2. Your child copies it.\n3. Check capitals and periods.");
+  on("wed","science","Example: Sink or float?","Gather the night before: a bowl of water and 8 small objects.\n1. Guess: will it sink or float?\n2. Test each one.\n3. Talk about what the floaters have in common.");
+  on("fri","extra","Example: Look at a famous painting","1. Look quietly for one minute.\n2. Ask: what do you notice first?\n3. Your child draws their favorite part.");
+  ev("readaloud","Example: Read a picture book together","1. Read the book aloud.\n2. Ask: what happened first, next, and last?");
+  ev("close","Example: Closing prayer","Stand together and pray to end the day.");
+  (S.goals[w]=S.goals[w]||[]).push({t:"Example: By Friday, my child can count to 20 without help",ex:true});
+  save(w)}
+
+/* ----- start ----- */
+let started=false;
+function startOnce(){if(started){render();return}started=true;let lp=null;try{lp=JSON.parse(localStorage.getItem(LKEY+"-pos")||"null")}catch(e){}
+  const p=lp&&lp.w?lp:todayPos();curW=p.w;cur=p.d;render()}
+async function callInvite(payload){const {data:sess}=await Store.sb.auth.getSession();const token=sess&&sess.session&&sess.session.access_token;const cfg=window.PLANNER_CONFIG||{};
+  const r=await fetch(cfg.supabaseUrl.replace(/\/$/,"")+"/functions/v1/invite",{method:"POST",headers:{"Content-Type":"application/json",apikey:cfg.supabaseAnonKey,Authorization:"Bearer "+token},body:JSON.stringify(payload)});
+  const out=await r.json().catch(()=>({}));if(!r.ok)throw new Error(out.error||"Something went wrong. Try again.");return out}
+async function loadInvites(){try{const {people}=await callInvite({action:"list"});const n=people.filter(x=>x.joined).length;
+  $("inviteCount").textContent=people.length+" invited, "+n+" signed in";
+  $("invList").innerHTML=people.map(x=>`<li style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-family:var(--sans);font-size:.9rem"><span>${esc(x.email)}</span><span class="note">${x.joined?"Signed in":"Invited "+fmt(new Date(x.invited))}</span></li>`).join("")}catch(e){$("invMsg").textContent=e.message}}
+var isAdminFlag=false;
+async function checkAdmin(){isAdminFlag=false;$("invitePanel").hidden=true;if(Store.mode!=="cloud")return;try{const {isAdmin}=await callInvite({action:"check"});isAdminFlag=!!isAdmin;if(isAdminFlag){render();loadInvites()}}catch(e){}}
+$("invSend").addEventListener("click",async()=>{const email=$("invEmail").value.trim();if(!email){$("invEmail").focus();return}
+  $("invSend").disabled=true;$("invMsg").textContent="Sending…";
+  try{await callInvite({action:"invite",email,redirectTo:location.origin+location.pathname});$("invMsg").textContent="Invitation sent to "+email+".";$("invEmail").value="";loadInvites()}
+  catch(e){$("invMsg").textContent=e.message}finally{$("invSend").disabled=false}});
+$("invEmail").addEventListener("keydown",e=>{if(e.key==="Enter")$("invSend").click()});
+function showApp(){$("authView").hidden=true;$("appView").hidden=false;$("acctBar").hidden=false;
+  $("acctWho").textContent=Store.mode==="cloud"?"Signed in as "+(Store.user.email||"you"):"Trying it out. This browser keeps your planner.";
+  $("signOutBtn").textContent=Store.mode==="cloud"?"Sign out":"Exit";$("acctSection").hidden=Store.mode!=="cloud";limits=null;startOnce();checkAdmin()}
+function showAuth(msg){$("appView").hidden=true;$("acctBar").hidden=true;$("authView").hidden=false;$("authMsg").textContent=msg||""}
+$("signOutBtn").addEventListener("click",async()=>{if(Store.mode==="cloud"){if(Store.dirty)await Store.flush();await Store.sb.auth.signOut()}Store.mode=null;S=blank();started=false;showAuth("")});
+$("authForm").addEventListener("submit",async e=>{e.preventDefault();const email=$("authEmail").value.trim();if(!email)return;
+  if(!Store.sb){$("authMsg").textContent="Sign-in is not set up on this site yet. You can try it without an account.";return}
+  $("authMsg").textContent="Sending…";
+  const {error}=await Store.sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:false}});
+  $("authMsg").textContent=!error?"Look in your email for a sign-in link. You can close this tab.":(/signup|not allowed|not found|otp_disabled/i.test(error.message+" "+(error.code||""))?"That email does not have an invitation. Ask the person who told you about this planner.":"The link did not send: "+error.message)});
+$("deleteAcctBtn").addEventListener("click",async e=>{if(!confirmInline(e.target,"This deletes your account and planner forever. Download a backup first.","Tap to delete"))return;
+  const {error}=await Store.sb.rpc("delete_my_account");if(error){toast("The account was not deleted: "+error.message);return}
+  try{localStorage.removeItem(LKEY+"-"+Store.user.id)}catch(_){}await Store.sb.auth.signOut();Store.mode=null;S=blank();started=false;showAuth("Your account and planner are deleted.")});
+window.addEventListener("beforeunload",e=>{if(Store.mode==="cloud"&&(Store.dirty||Store.inflight)){Store.flush();e.preventDefault();e.returnValue=""}});
+(async function boot(){
+  const cfg=window.PLANNER_CONFIG||{},lib=window.supabase;
+  if(cfg.supabaseUrl&&cfg.supabaseAnonKey&&lib&&lib.createClient){
+    Store.sb=lib.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+    const onUser=async u=>{if(u&&Store.mode!=="cloud"){Store.mode="cloud";Store.user=u;await Store.load();showApp()}};
+    Store.sb.auth.onAuthStateChange((ev,session)=>{if(session&&session.user)onUser(session.user)});
+    const {data}=await Store.sb.auth.getSession();if(data&&data.session){await onUser(data.session.user);return}
+  }
+  showAuth("")})();
+</script>
+</body>
+</html>

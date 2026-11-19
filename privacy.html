@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Homeschool Planner</title>
+<style>
+:root{--paper:#fbf8f2;--ink:#2b2a27;--muted:#6f6a60;--line:#e5dfd3;--accent:#2f6b5a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#1c1b19;--ink:#ece8df;--muted:#a8a296;--line:#3a3833;--accent:#6fbfa5}}
+:root[data-theme="dark"]{--paper:#1c1b19;--ink:#ece8df;--muted:#a8a296;--line:#3a3833;--accent:#6fbfa5}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 Georgia,"Iowan Old Style",serif}
+main{max-width:680px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:1.7rem;margin:0 0 4px}
+h2{font-size:1.15rem;margin:28px 0 6px}
+.meta{color:var(--muted);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:.9rem}
+a{color:var(--accent)}
+.todo{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;color:var(--muted);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">← Back to the planner</a></p>
+<h1>Privacy</h1>
+<p class="meta">Last updated: <!-- EDIT: date you publish --> [date]</p>
+
+<p class="todo">Draft for the site owner: review and edit the bracketed parts before you launch, and have someone qualified look it over if you can. This is a starting point, not legal advice.</p>
+
+<h2>Who runs this</h2>
+<p>Homeschool Planner is a free planner run by [your name or site name]. Questions or requests go to [contact email].</p>
+
+<h2>What we collect</h2>
+<p><b>Your email address</b>, used only to send your invitation and sign-in links, and to identify your account.</p>
+<p><b>What you put in your planner</b>: dates, subjects, lessons, notes, goals, and checkmarks. If you enter a child's name, it's stored with your planner. A first name or nickname is all the planner needs.</p>
+<p>We don't use ads or tracking cookies, and we don't sell or share your information. The site keeps your sign-in and a copy of your planner in your browser's storage so it loads quickly.</p>
+
+<h2>Photos of your curriculum</h2>
+<p>When you use <b>Fill from photos</b>, your photos go to Anthropic's Claude service to be read, and the lessons it finds come back to your planner. This site does not keep your photos. It keeps only a count of pages for the monthly limit. Only photograph books you own, and avoid photos that show your child's name or face.</p>
+
+<h2>Who can see your planner</h2>
+<p>Only you, when you're signed in. The database refuses to show one account's planner to any other account. The site owner can technically reach the database for upkeep and support, but won't look at your planner unless you ask for help.</p>
+
+<h2>Where it's stored</h2>
+<p>Accounts and planners are stored with Supabase, a database provider, in the United States (US West). Photos are read by Anthropic's Claude service and are not kept by this site. The site's pages are served by GitHub Pages.</p>
+
+<h2>Children</h2>
+<p>This planner is for parents and teachers. Children shouldn't create accounts. If you think a child under 13 has signed up, email [contact email] and we'll delete the account.</p>
+
+<h2>Keeping or deleting your data</h2>
+<p>You can download a full copy of your planner at any time from <b>Setup → Download backup</b>. To delete your account and everything in it, use <b>Setup → Delete my account</b>. This is immediate and permanent. You can also email [contact email].</p>
+
+<h2>Changes</h2>
+<p>If this policy changes, we'll update the date above. If a change affects what we do with your information, we'll tell you when you sign in.</p>
+</main>
+</body>
+</html>

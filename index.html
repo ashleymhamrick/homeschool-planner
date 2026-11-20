@@ -685,8 +685,13 @@ const Store={mode:null,sb:null,user:null,version:0,timer:null,inflight:false,dir
     this.setStatus("Loading your planner…");
     const {data,error}=await this.sb.from("planners").select("data,version").eq("user_id",this.user.id).maybeSingle();
     if(error){let d=null;try{d=JSON.parse(localStorage.getItem(LKEY+"-"+this.user.id)||"null")}catch(e){}S=d&&d.setup?d:blank();this.version=-1;this.setStatus("Your saved planner did not load. This browser keeps your changes for now.",true);return}
-    if(!data){S=blank();const ins=await this.sb.from("planners").insert({user_id:this.user.id,data:S,version:1});this.version=ins.error?-1:1;this.setStatus(ins.error?"Not saved yet.":"Saved to your account",!!ins.error)}
-    else{S=data.data&&data.data.setup?{...blank(),...data.data}:blank();this.version=data.version;this.local();this.setStatus("Saved to your account")}
+    let mine=null;try{mine=JSON.parse(localStorage.getItem(LKEY+"-"+this.user.id)||"null")}catch(e){}
+    if(!data){/* No saved planner yet: keep what this browser already has, and save it to the account. */
+      S=mine&&mine.setup?{...blank(),...mine}:blank();const ins=await this.sb.from("planners").insert({user_id:this.user.id,data:S,version:1});this.version=ins.error?-1:1;this.setStatus(ins.error?"Not saved yet.":"Saved to your account",!!ins.error);if(ins.error)this.dirty=true}
+    else{S=data.data&&data.data.setup?{...blank(),...data.data}:blank();this.version=data.version;
+      /* This browser has a different copy with more lessons: keep it aside and ask, instead of replacing it. */
+      if(mine&&mine.setup&&countLessons(mine)>countLessons(S)&&JSON.stringify(mine)!==JSON.stringify(data.data)){this.alt=mine;try{localStorage.setItem(LKEY+"-"+this.user.id+"-other",JSON.stringify(mine))}catch(e){}}
+      this.local();this.setStatus("Saved to your account")}
     $("backupNote").textContent="Your planner saves to your account automatically. Only you can see it. You can also download a copy.";
   },
   mark(){this.local();if(this.mode!=="cloud")return;this.dirty=true;this.setStatus("Saving…");clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),800)},
@@ -707,6 +712,7 @@ const Store={mode:null,sb:null,user:null,version:0,timer:null,inflight:false,dir
   }
 };
 function save(){Store.mark()}
+function countLessons(d){let n=0;try{for(const w in d.weeks||{}){const W=d.weeks[w];for(const sec in W.every||{})n+=(W.every[sec]||[]).length;for(const dk in W.days||{})for(const sec in W.days[dk])n+=(W.days[dk][sec]||[]).length}}catch(e){}return n}
 function toast(t){const el=$("toast");el.classList.remove("act");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2800)}
 function toastAction(t,label,fn,ms){const el=$("toast");el.innerHTML=`${esc(t)}<button class="toastbtn" type="button">${esc(label)}</button>`;el.classList.add("show","act");
   el.querySelector("button").onclick=()=>{el.classList.remove("show","act");clearTimeout(toast.t);fn()};clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show","act"),ms||10000)}
@@ -758,7 +764,7 @@ function render(){normalize();if(curKid!=="all"&&(!multi()||!kidById(curKid)))cu
   for(const id of ["tabs","day","saveState","quick","noteBox"])$(id).hidden=wizOn;$("kids").hidden=wizOn||!multi();if(wizOn)$("weeks").hidden=true;
   if(wizOn)renderWizard();
   const exHere=Object.values(S.weeks).some(W=>JSON.stringify(W).includes('"ex":true'));
-  $("welcome").innerHTML=wizOn?"":(exHere?`<div class="exbanner"><span>This is an <b>example week</b>. Select other days to see more.</span><button class="btn small" id="clearEx">Delete the example</button></div>`:"")+(any&&Store.mode==="demo"&&backupDue()?`<div class="banner"><b>Keep your planner safe.</b> Your planner is only in this browser. If you clear your browser data, you lose it. Download a backup each week.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-backup="1">Download a backup now</button></div></div>`:"")+(any?"":`<div class="banner"><b>Your week is empty.</b> To start, take photos of one week in your teacher's book.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-start="photos">Use photos</button><button class="btn fit" data-start="type">Type lessons</button><button class="btn fit" data-start="example">Show an example</button></div></div>`);
+  $("welcome").innerHTML=(Store.alt?`<div class="banner"><b>This browser has a different copy of your planner.</b> It has ${plural(countLessons(Store.alt),"lesson")}. The copy saved to your account has ${plural(countLessons(S),"lesson")}. Which one do you want to keep?<div class="row" style="margin-top:8px"><button class="btn primary small" id="useAlt">Keep this browser's copy</button><button class="btn small" id="keepSaved">Keep the saved copy</button></div></div>`:"")+(wizOn?"":(exHere?`<div class="exbanner"><span>This is an <b>example week</b>. Select other days to see more.</span><button class="btn small" id="clearEx">Delete the example</button></div>`:"")+(any&&Store.mode==="demo"&&backupDue()?`<div class="banner"><b>Keep your planner safe.</b> Your planner is only in this browser. If you clear your browser data, you lose it. Download a backup each week.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-backup="1">Download a backup now</button></div></div>`:"")+(any?"":`<div class="banner"><b>Your week is empty.</b> To start, take photos of one week in your teacher's book.<div class="row" style="margin-top:10px"><button class="btn primary fit" data-start="photos">Use photos</button><button class="btn fit" data-start="type">Type lessons</button><button class="btn fit" data-start="example">Show an example</button></div></div>`));
   renderWeeks();renderKids();renderTabs();renderGoals();renderMain();renderPhotoWeeks();
   renderMissed();renderQuick(any);renderNote(any);
   $("viewbar").hidden=wizOn;document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===view)));
@@ -1387,6 +1393,8 @@ function fillPassUI(){$("passNote").textContent=hasPass()?"You sign in with your
 function openPassword(){$("passUser").value=(Store.user&&Store.user.email)||"";$("newPass").value="";$("newPass2").value="";$("passMsg").textContent="";
   Sheet.open(hasPass()?"Change password":"Make a password",$("passPanel"));setTimeout(()=>$("newPass").focus(),50)}
 $("passOpenBtn").addEventListener("click",()=>openPassword());
+document.addEventListener("click",e=>{if(e.target.id==="useAlt"&&Store.alt){S={...blank(),...Store.alt};Store.alt=null;save();render();toast("Kept this browser's copy. It is now saved to your account.")}
+  else if(e.target.id==="keepSaved"&&Store.alt){Store.alt=null;render();toast("Kept the saved copy. This browser's copy is still kept aside, just in case.")}});
 async function savePassword(a,b,msg,btn){
   if(a.length<8){msg.textContent="Use at least 8 characters.";return false}
   if(a!==b){msg.textContent="The two passwords are not the same. Type them again.";return false}
